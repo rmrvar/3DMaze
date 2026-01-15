@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MazeGenerator : MonoBehaviour
@@ -6,37 +7,59 @@ public class MazeGenerator : MonoBehaviour
     [SerializeField, Range(0, 5)] private float _speed = 1;
     [SerializeField, Range(0, 5)] private int _subdivisions = 1;
     [SerializeField, Range(1, 20)] private int _radius = 10;
+    [SerializeField, Range(0, 3)] private float _wallHeight = 2;
+    [SerializeField, Range(0, 1)] private float _wallThickness = 0.1F;
+    
+    
+    [SerializeField] 
+    private MeshFilter _floorMeshFilter;
+    [SerializeField]
+    private MeshFilter _wallsMeshFilter;
     
     private void Start()
     {
         _icosahedron = new Icosahedron(_radius, _subdivisions);
-        _meshFilter = GetComponent<MeshFilter>();
         
-        
-        var mesh = new Mesh();
+        var floorMesh = new Mesh();
         var verts = new List<Vector3>();
         var indices = new List<int>();
 
-        for (int triangleCount = 0; triangleCount < _icosahedron.Triangles2.Count; ++triangleCount)
+        for (int triangleIndex = 0; triangleIndex < _icosahedron.Triangles2.Count; ++triangleIndex)
         {
-            var triangle = _icosahedron.Triangles2[triangleCount];
+            var triangle = _icosahedron.Triangles2[triangleIndex];
             for (int i = 0; i < triangle.Points.Count; ++i)
             {
-                var pointIndex = triangleCount * 3 + i;
+                var pointIndex = triangleIndex * 3 + i;
                 
                 verts.Add(triangle.Points[i]);
                 indices.Add(pointIndex);
             }
         }
-        mesh.vertices = verts.ToArray();
-        mesh.triangles = indices.ToArray();
-        mesh.RecalculateNormals();
-        _meshFilter.mesh = mesh;
+        
+        floorMesh.vertices = verts.ToArray();
+        floorMesh.triangles = indices.ToArray();
+        floorMesh.RecalculateNormals();
+        _floorMeshFilter.mesh = floorMesh;
+        
+        
+        var verts2 = new List<Vector3>();
+        var indices2 = new List<int>();
+        for (int i = 0; i < _icosahedron.Triangles2.Count; ++i)
+        {       
+            var mazeTile = new MazeTile();
+            mazeTile.CreateMesh(_icosahedron.Triangles2[i], i * 4, _wallThickness, _wallHeight);
+            verts2.AddRange(mazeTile.Points);
+            indices2.AddRange(mazeTile.Indices);
+        }
+        var wallsMesh = new Mesh();
+        wallsMesh.vertices = verts2.ToArray();
+        wallsMesh.SetIndices(indices2, MeshTopology.Quads, 0);
+        _wallsMeshFilter.mesh = wallsMesh;
     }
 
     private void Update()
     {
-        // _t += Time.deltaTime * _speed;
+        _t += Time.deltaTime * _speed;
     }
     
     private void OnDrawGizmosSelected()
@@ -67,7 +90,6 @@ public class MazeGenerator : MonoBehaviour
         // }
     }
 
-    private MeshFilter _meshFilter;
     private Icosahedron _icosahedron;
     private float _t;
 }

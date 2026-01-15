@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Triangle
 {
+    public Vector3 Center => (Points[0] + Points[1] + Points[2]) / 3.0F;
+    public Vector3 Normal => Vector3.Cross(Points[1] - Points[0], Points[2] - Points[0]).normalized;
+    
     public Triangle(Vector3 a, Vector3 b, Vector3 c)
     {
         Points = new List<Vector3> { a, b, c };
