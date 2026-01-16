@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
 public class MazeGenerator : MonoBehaviour
@@ -41,20 +42,22 @@ public class MazeGenerator : MonoBehaviour
         _floorMeshFilter.mesh = floorMesh;
         
         
-        var verts2 = new List<Vector3>();
-        var indices2 = new List<int>();
+        // Preallocate Vector3[] verts, int[] indices, ref vOffset ref iOffset (in and out in ref)  
+        var verts2 = new Vector3[_icosahedron.Triangles2.Count * MazeTile.NUM_VERTICES];
+        var indices2 = new int[_icosahedron.Triangles2.Count * MazeTile.NUM_INDICES];
+        int vIndex = 0;
+        int iIndex = 0;
         for (int i = 0; i < _icosahedron.Triangles2.Count; ++i)
+        // for (int i = 0; i < 3; ++i)
         {       
             var mazeTile = new MazeTile();
-            mazeTile.CreateMesh(_icosahedron.Triangles2[i], i * MazeTile.NumVerts, _wallThickness, _wallHeight);
-            verts2.AddRange(mazeTile.Points);
-            indices2.AddRange(mazeTile.Indices);
+            mazeTile.CreateMesh(_icosahedron.Triangles2[i], verts2, indices2, ref vIndex, ref iIndex, _wallThickness, _wallHeight);
         }
         var wallsMesh = new Mesh();
-        wallsMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        wallsMesh.vertices = verts2.ToArray();
+        wallsMesh.MarkDynamic();
+        wallsMesh.SetVertices(verts2);
         wallsMesh.SetIndices(indices2, MeshTopology.Quads, 0);
-        wallsMesh.RecalculateNormals();
+        wallsMesh.RecalculateNormals();  
         _wallsMeshFilter.mesh = wallsMesh;
     }
     
