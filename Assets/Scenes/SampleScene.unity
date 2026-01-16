@@ -414,7 +414,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MazeGenerator
   _speed: 1
   _subdivisions: 3
-  _radius: 10
+  _radius: 15
+  _wallHeight: 2
+  _wallThickness: 0.403
   _floorMeshFilter: {fileID: 2129019758}
   _wallsMeshFilter: {fileID: 1456535229}
 --- !u!4 &651902714

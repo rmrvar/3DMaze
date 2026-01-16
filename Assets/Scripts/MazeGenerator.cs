@@ -1,11 +1,10 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class MazeGenerator : MonoBehaviour
 {
     [SerializeField, Range(0, 5)] private float _speed = 1;
-    [SerializeField, Range(0, 5)] private int _subdivisions = 1;
+    [SerializeField, Range(0, 10)] private int _subdivisions = 1;
     [SerializeField, Range(1, 20)] private int _radius = 10;
     [SerializeField, Range(0, 3)] private float _wallHeight = 2;
     [SerializeField, Range(0, 1)] private float _wallThickness = 0.1F;
@@ -47,16 +46,18 @@ public class MazeGenerator : MonoBehaviour
         for (int i = 0; i < _icosahedron.Triangles2.Count; ++i)
         {       
             var mazeTile = new MazeTile();
-            mazeTile.CreateMesh(_icosahedron.Triangles2[i], i * 4, _wallThickness, _wallHeight);
+            mazeTile.CreateMesh(_icosahedron.Triangles2[i], i * MazeTile.NumVerts, _wallThickness, _wallHeight);
             verts2.AddRange(mazeTile.Points);
             indices2.AddRange(mazeTile.Indices);
         }
         var wallsMesh = new Mesh();
+        wallsMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         wallsMesh.vertices = verts2.ToArray();
         wallsMesh.SetIndices(indices2, MeshTopology.Quads, 0);
+        wallsMesh.RecalculateNormals();
         _wallsMeshFilter.mesh = wallsMesh;
     }
-
+    
     private void Update()
     {
         _t += Time.deltaTime * _speed;
@@ -89,7 +90,7 @@ public class MazeGenerator : MonoBehaviour
         //     }
         // }
     }
-
+    
     private Icosahedron _icosahedron;
     private float _t;
 }
