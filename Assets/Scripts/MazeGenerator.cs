@@ -104,14 +104,19 @@ public class MazeGenerator : MonoBehaviour
             .OrderBy(x => Random.value)
             .ToArray();
 
+        bool hasFilled1 = false;
+        bool hasFilled2 = false;
+        
         foreach (var index in shuffledIndices)
         {
             var wall = _edgeToWall[edges[index]];
 
-            var isSkipped1 = _skippedCells.Contains(wall.Cell1);
-            var isSkipped2 = _skippedCells.Contains(wall.Cell2);
+            var isSkipped1Pole1 = _skippedCellsPole1.Contains(wall.Cell1);
+            var isSkipped1Pole2 = _skippedCellsPole2.Contains(wall.Cell1);
+            var isSkipped2Pole1 = _skippedCellsPole1.Contains(wall.Cell2);
+            var isSkipped2Pole2 = _skippedCellsPole2.Contains(wall.Cell2);
             
-            if (isSkipped1 && isSkipped2)
+            if (isSkipped1Pole1 && isSkipped2Pole1 || isSkipped1Pole2 && isSkipped2Pole2)
             {  // Don't fill the borders.
                 wall.SetRaisedness(false);
                 continue;
@@ -120,13 +125,20 @@ public class MazeGenerator : MonoBehaviour
             // Handle borders.
             var cell1 = wall.Cell1;
             var cell2 = wall.Cell2;
-            if (cell2 == null ||          // Only possible in non-fully connected mazes
-                isSkipped1 != isSkipped2
+            if (cell2 == null ||  // Only possible in non-fully connected mazes
+                (isSkipped1Pole1 || isSkipped2Pole1) && hasFilled1 ||
+                (isSkipped1Pole2 || isSkipped2Pole2) && hasFilled2
               )
             {
                 wall.SetRaisedness(true);
-                continue;  // Can't divide.
+                continue;  // Can't divide.    
             }
+            
+            // Only allow one connection in top and bottom pole
+            if (isSkipped1Pole1 || isSkipped2Pole1)
+                hasFilled1 = true;
+            if (isSkipped1Pole2 || isSkipped2Pole2)
+                hasFilled2 = true;
             
             int idA = faceToBranch[new FaceKey(cell1.I1, cell1.I2, cell1.I3)];
             int idB = faceToBranch[new FaceKey(cell2.I1, cell2.I2, cell2.I3)];
@@ -149,7 +161,7 @@ public class MazeGenerator : MonoBehaviour
             }
         }
     }
-
+    
     private void SkipCellsOnPoles()
     {
         foreach (var cell in _faceToCell.Values)
@@ -161,18 +173,24 @@ public class MazeGenerator : MonoBehaviour
 
             var dot = Vector3.Dot(midpoint.normalized, Vector3.up);
 
-            if (dot > 1 - _skipThreshold || dot < -1 + _skipThreshold)
+            if (dot > 1 - _skipThreshold)
             {
-                _skippedCells.Add(cell);
+                _skippedCellsPole1.Add(cell);
+            }
+            if (dot < -1 + _skipThreshold)
+            {
+                _skippedCellsPole2.Add(cell);
             }
         }
-        Debug.Log("Skipped " + _skippedCells.Count + " faces");
+        Debug.Log("Pole1: Skipped " + _skippedCellsPole1.Count + " faces");
+        Debug.Log("Pole2: Skipped " + _skippedCellsPole2.Count + " faces");
     }
 
     private readonly Dictionary<EdgeKey, MazeWall> _edgeToWall = new();
     private readonly Dictionary<FaceKey, MazeCell> _faceToCell = new();
     private readonly List<Vector3> _vertices = new();
     private readonly List<int> _indices = new();
-    private readonly HashSet<MazeCell> _skippedCells = new();
+    private readonly HashSet<MazeCell> _skippedCellsPole1 = new();
+    private readonly HashSet<MazeCell> _skippedCellsPole2 = new();
     private Icosahedron _icosahedron;
 }
