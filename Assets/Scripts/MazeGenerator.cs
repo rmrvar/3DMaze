@@ -22,6 +22,10 @@ public class MazeGenerator : MonoBehaviour
     private float _skipThreshold = 0.15F;
     [SerializeField]
     private int _wallsPerSecond = 30;
+    [SerializeField]
+    private float _animDuration = 0.5F;
+    [SerializeField]
+    private Material _mazeMaterial;
     
     private void Awake()
     {
@@ -31,7 +35,7 @@ public class MazeGenerator : MonoBehaviour
         
         foreach (var (_, wall) in _edgeToWall)
         {
-            wall.Construct(_icosahedron.MeshData, _vertices, _indices);
+            wall.Construct(_icosahedron.MeshData, _vertices, _indices, _uvs1, _uvs2);
         }
 
         SkipCellsOnPoles();
@@ -40,6 +44,8 @@ public class MazeGenerator : MonoBehaviour
 
         _mesh = new Mesh();
         _mesh.SetVertices(_vertices);
+        _mesh.SetUVs(0, _uvs1);
+        _mesh.SetUVs(1, _uvs2);
         _mesh.SetIndices(_indices.ToArray(), MeshTopology.Quads, 0);
         _mesh.RecalculateNormals();
         GetComponent<MeshFilter>().mesh = _mesh;
@@ -47,6 +53,8 @@ public class MazeGenerator : MonoBehaviour
         
         var sphere = Instantiate(_spherePrefab);
         sphere.localScale = Vector3.one * (2 * _radius - 1.5F);  // Needs to be a bit less deep so no gaps
+        
+        _mazeMaterial.SetFloat("_WallHeight", _wallHeight);
     }
 
     private void OnTriangleAdded(int i1, int i2, int i3)
@@ -252,11 +260,23 @@ public class MazeGenerator : MonoBehaviour
         } 
         Debug.Log("Finished generating!");
         _mesh.SetVertices(_vertices);
-        // _mesh.SetIndices(_indices.ToArray(), MeshTopology.Quads, 0);
+        _mesh.SetUVs(0, _uvs1);
+        // _mesh.SetUVs(1, _uvs2);  // Stays the same
+        // _mesh.SetIndices(_indices.ToArray(), MeshTopology.Quads, 0);  // Stays the same
         _mesh.RecalculateNormals();
         GetComponent<MeshFilter>().mesh = _mesh;
         GetComponent<MeshCollider>().sharedMesh = _mesh;
         _shouldFinishInstantly = false;
+        
+        float elapsed = 0;
+        while (elapsed < _animDuration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / _animDuration);
+            _mazeMaterial.SetFloat("_AnimProgress", progress);
+            yield return null;
+        }
+        _mazeMaterial.SetFloat("_AnimProgress", 1);
     }
     
     private void SkipCellsOnPoles()
@@ -297,6 +317,8 @@ public class MazeGenerator : MonoBehaviour
     private readonly Dictionary<FaceKey, MazeCell> _faceToCell = new();
     private readonly List<Vector3> _vertices = new();
     private readonly List<int> _indices = new();
+    private readonly List<Vector2> _uvs1 = new();  // New state/old state pairs
+    private readonly List<Vector3> _uvs2 = new();  // Normals
     private readonly HashSet<MazeCell> _skippedCellsPole1 = new();
     private readonly HashSet<MazeCell> _skippedCellsPole2 = new();
     private Icosahedron _icosahedron;

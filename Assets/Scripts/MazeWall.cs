@@ -48,14 +48,18 @@ public class MazeWall
             {
                 _vertices[topIndex] = _topIndexToHeights[topIndex].Item1;
             }
+            
+            var prevUv1 = _uvs1[topIndex];
+            _uvs1[topIndex] = new Vector2(prevUv1.y, raisedness ? 1 : 0);
         }
     }
     
     public bool Raisedness { get; private set; }
 
-    public void Construct(MeshData meshData, List<Vector3> vertices, List<int> indices)
+    public void Construct(MeshData meshData, List<Vector3> vertices, List<int> indices, List<Vector2> uvs1, List<Vector3> uvs2)
     {
         _vertices = vertices;
+        _uvs1 = uvs1;
         
         var v1 = meshData.Vertices[I1];
         var v2 = meshData.Vertices[I2];
@@ -67,8 +71,12 @@ public class MazeWall
         
         var topVertices1 = new Queue<Vector3>();
         var topIndices1 = new Queue<int>();
+        // var topUvs1_1 = new Queue<Vector2>();
+        // var topUvs2_1 = new Queue<Vector3>();
         var topVertices2 = new Queue<Vector3>();
         var topIndices2 = new Queue<int>();
+        // var topUvs1_2 = new Queue<Vector2>();
+        // var topUvs2_2 = new Queue<Vector3>();
         
         int originalVertexCount = vertices.Count;
         int numSteps = Smoothness;
@@ -86,10 +94,15 @@ public class MazeWall
             indices.Add(vertices.Count + 1);  // pt
             indices.Add(vertices.Count + 0);  // pb
             vertices.Add(pb);
+            uvs1.Add(new Vector2(1, 1));  // Raised at start
+            uvs2.Add(up1);
             vertices.Add(pt);
+            uvs1.Add(new Vector2(1, 1));  // Raised at start
+            uvs2.Add(up1);
             
             topVertices1.Enqueue(pt);
             topIndices1.Enqueue(vertices.Count - 1);
+            
             _topIndexToHeights.Add(vertices.Count - 1, (pb, pt));
         }
         // HALF-CYLINDER 2
@@ -118,14 +131,18 @@ public class MazeWall
             }
             
             vertices.Add(pb);
+            uvs1.Add(new Vector2(1, 1));  // Raised at start
+            uvs2.Add(up2);
             vertices.Add(pt);
+            uvs1.Add(new Vector2(1, 1));  // Raised at start
+            uvs2.Add(up2);
             
             topVertices2.Enqueue(pt);
             topIndices2.Enqueue(vertices.Count - 1);
             _topIndexToHeights.Add(vertices.Count - 1, (pb, pt));
         }
         // TOP
-        var topVertices = new List<Vector3>();
+        var topVertices = new List<Vector3>();  // TODO: Don't want to share verts with sides.
         var topIndices = new List<int>();
         while (topVertices1.Count > 0)
         {
@@ -151,4 +168,5 @@ public class MazeWall
     private readonly Dictionary<int, (Vector3, Vector3)> _topIndexToHeights = new();
     private List<int> _topIndices;
     private List<Vector3> _vertices;
+    private List<Vector2> _uvs1;
 }

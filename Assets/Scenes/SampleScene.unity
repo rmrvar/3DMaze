@@ -290,7 +290,9 @@ MonoBehaviour:
   _wallSmoothness: 5
   _spherePrefab: {fileID: 3612808303316500759, guid: ac1ba46808aea5e49a4f854769af5e94, type: 3}
   _skipThreshold: 0.1
-  _wallsPerSecond: 30
+  _wallsPerSecond: 120
+  _animDuration: 0.8
+  _mazeMaterial: {fileID: 2100000, guid: ba4fa05f6ae02db40b6b4b1d518a2826, type: 2}
 --- !u!4 &651902714
 Transform:
   m_ObjectHideFlags: 0
@@ -339,7 +341,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c0466182c3594814cbf5bc9724a0c70e, type: 2}
+  - {fileID: 2100000, guid: ba4fa05f6ae02db40b6b4b1d518a2826, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
