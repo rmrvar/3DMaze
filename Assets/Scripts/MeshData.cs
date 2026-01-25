@@ -28,5 +28,5 @@ public class MeshData
         OnTriangleAdded?.Invoke(i1, i2, i3);
     }
     
-    private Dictionary<VertexKey, int> _vertexToIndex = new();
+    private readonly Dictionary<VertexKey, int> _vertexToIndex = new();
 }
