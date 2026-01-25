@@ -414,11 +414,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 592b89a3e6cc42b418e15773964221d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MazeGenerator
-  _radius: 27.3
+  _radius: 27
   _numSubdivisions: 2
-  _wallHeight: 2
-  _wallThickness: 0.403
+  _wallHeight: 4
+  _wallThickness: 1
   _wallSmoothness: 5
+  _spherePrefab: {fileID: 3612808303316500759, guid: ac1ba46808aea5e49a4f854769af5e94, type: 3}
 --- !u!4 &651902714
 Transform:
   m_ObjectHideFlags: 0

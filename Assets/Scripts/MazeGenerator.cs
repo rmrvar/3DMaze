@@ -14,6 +14,8 @@ public class MazeGenerator : MonoBehaviour
     private float _wallThickness = 0.1F;
     [SerializeField, Range(0, 20)] 
     private int _wallSmoothness = 5;
+    [SerializeField]
+    private Transform _spherePrefab;
     
     private void Awake()
     {
@@ -37,6 +39,9 @@ public class MazeGenerator : MonoBehaviour
         mesh.SetIndices(_indices.ToArray(), MeshTopology.Quads, 0);
         mesh.RecalculateNormals();
         GetComponent<MeshFilter>().mesh = mesh;
+        
+        var sphere = Instantiate(_spherePrefab);
+        sphere.localScale = Vector3.one * (2 * _radius - 1.5F);  // Needs to be a bit less deep so no gaps
     }
 
     private void OnTriangleAdded(int i1, int i2, int i3)
