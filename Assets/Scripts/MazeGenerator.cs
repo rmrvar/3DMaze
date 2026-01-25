@@ -1,99 +1,139 @@
 using System.Collections.Generic;
-using Unity.Collections;
+using System.Linq;
 using UnityEngine;
 
 public class MazeGenerator : MonoBehaviour
 {
-    [SerializeField, Range(0, 5)] private float _speed = 1;
-    [SerializeField, Range(0, 10)] private int _subdivisions = 1;
-    [SerializeField, Range(1, 20)] private int _radius = 10;
-    [SerializeField, Range(0, 3)] private float _wallHeight = 2;
-    [SerializeField, Range(0, 1)] private float _wallThickness = 0.1F;
+    [SerializeField, Range(1, 100)]
+    private float _radius;
+    [SerializeField, Range(0, 10)]
+    private int _numSubdivisions = 0;
+    [SerializeField, Range(0, 10)] 
+    private float _wallHeight = 2;
+    [SerializeField, Range(0, 3)]
+    private float _wallThickness = 0.1F;
+    [SerializeField, Range(0, 20)] 
+    private int _wallSmoothness = 5;
     
-    
-    [SerializeField] 
-    private MeshFilter _floorMeshFilter;
-    [SerializeField]
-    private MeshFilter _wallsMeshFilter;
-    
-    private void Start()
+    private void Awake()
     {
-        _icosahedron = new Icosahedron(_radius, _subdivisions);
-        
-        var floorMesh = new Mesh();
-        var verts = new List<Vector3>();
-        var indices = new List<int>();
+        // var triangularGrid = new TriangularGrid(_size);
+        // triangularGrid.MeshData.OnTriangleAdded += OnTriangleAdded;
+        // triangularGrid.GenerateMesh();
 
-        for (int triangleIndex = 0; triangleIndex < _icosahedron.Triangles2.Count; ++triangleIndex)
+        var icosahedron = new Icosahedron(_radius, _numSubdivisions);
+        icosahedron.MeshData.OnTriangleAdded += OnTriangleAdded;
+        icosahedron.GenerateMesh();
+        
+        foreach (var (_, wall) in _edgeToWall)
         {
-            var triangle = _icosahedron.Triangles2[triangleIndex];
-            for (int i = 0; i < triangle.Points.Count; ++i)
+            wall.Construct(icosahedron.MeshData, _vertices, _indices);
+        }
+
+        DoKruskal();
+
+        var mesh = new Mesh();
+        mesh.SetVertices(_vertices);
+        mesh.SetIndices(_indices.ToArray(), MeshTopology.Quads, 0);
+        mesh.RecalculateNormals();
+        GetComponent<MeshFilter>().mesh = mesh;
+    }
+
+    private void OnTriangleAdded(int i1, int i2, int i3)
+    {
+        var wall1 = RegisterEdge(i1, i2);
+        var wall2 = RegisterEdge(i2, i3);
+        var wall3 = RegisterEdge(i3, i1);
+        var cell = RegisterFace(i1, i2, i3);
+        ConnectWallToCell(wall1, cell);
+        ConnectWallToCell(wall2, cell);
+        ConnectWallToCell(wall3, cell);
+    }
+
+    private MazeWall RegisterEdge(int i1, int i2)
+    {
+        var key = new EdgeKey(i1, i2);
+        if (!_edgeToWall.TryGetValue(key, out var wall))
+        {
+            wall = new MazeWall(key.V1, key.V2, _wallHeight, _wallThickness, _wallSmoothness, v => -v.normalized);
+            _edgeToWall.Add(key, wall);
+        }
+        return wall;
+    }
+
+    private MazeCell RegisterFace(int i1, int i2, int i3)
+    {
+        var key = new FaceKey(i1, i2, i3);
+        if (!_faceToCell.TryGetValue(key, out var cell))
+        {
+            cell = new MazeCell(i1, i2, i3);
+            _faceToCell.Add(key, cell);
+        }
+        return cell;
+    }
+
+    private void ConnectWallToCell(MazeWall wall, MazeCell cell)
+    {
+        if (wall.Cell1 == null)
+        {
+            wall.Cell1 = cell;
+        }
+        else
+        {
+            wall.Cell2 = cell;
+        }
+        cell.Walls.Add(wall);
+    }
+
+    private void DoKruskal()
+    {
+        var faceToBranch = new Dictionary<FaceKey, int>();
+        int faceCounter = 0;
+        foreach (var face in _faceToCell.Keys)
+        {
+            faceToBranch[face] = faceCounter++;
+        }
+
+        var edges = _edgeToWall.Keys.ToArray();
+        var shuffledIndices = Enumerable.Range(0, edges.Length)
+            .OrderBy(x => Random.value)
+            .ToArray();
+
+        foreach (var index in shuffledIndices)
+        {
+            var wall = _edgeToWall[edges[index]];
+            var cell1 = wall.Cell1;
+            var cell2 = wall.Cell2;
+            if (cell2 == null)
             {
-                var pointIndex = triangleIndex * 3 + i;
-                
-                verts.Add(triangle.Points[i]);
-                indices.Add(pointIndex);
+                wall.SetRaisedness(true);
+                continue;  // Can't divide.
+            }
+            
+            int idA = faceToBranch[new FaceKey(cell1.I1, cell1.I2, cell1.I3)];
+            int idB = faceToBranch[new FaceKey(cell2.I1, cell2.I2, cell2.I3)];
+
+            if (idA != idB)
+            {
+                wall.SetRaisedness(false);
+
+                foreach (var face in faceToBranch.Keys.ToList())
+                {
+                    if (faceToBranch[face] == idB)
+                    {
+                        faceToBranch[face] = idA;
+                    }
+                }
+            }
+            else
+            {
+                wall.SetRaisedness(true);
             }
         }
-        
-        floorMesh.vertices = verts.ToArray();
-        floorMesh.triangles = indices.ToArray();
-        floorMesh.RecalculateNormals();
-        _floorMeshFilter.mesh = floorMesh;
-        
-        
-        // Preallocate Vector3[] verts, int[] indices, ref vOffset ref iOffset (in and out in ref)  
-        var verts2 = new Vector3[_icosahedron.Triangles2.Count * MazeTile.NUM_VERTICES];
-        var indices2 = new int[_icosahedron.Triangles2.Count * MazeTile.NUM_INDICES];
-        int vIndex = 0;
-        int iIndex = 0;
-        for (int i = 0; i < _icosahedron.Triangles2.Count; ++i)
-        // for (int i = 0; i < 3; ++i)
-        {       
-            var mazeTile = new MazeTile();
-            mazeTile.CreateMesh(_icosahedron.Triangles2[i], verts2, indices2, ref vIndex, ref iIndex, _wallThickness, _wallHeight);
-        }
-        var wallsMesh = new Mesh();
-        wallsMesh.MarkDynamic();
-        wallsMesh.SetVertices(verts2);
-        wallsMesh.SetIndices(indices2, MeshTopology.Quads, 0);
-        wallsMesh.RecalculateNormals();  
-        _wallsMeshFilter.mesh = wallsMesh;
     }
-    
-    private void Update()
-    {
-        _t += Time.deltaTime * _speed;
-    }
-    
-    private void OnDrawGizmosSelected()
-    {
-        foreach (var vertex in _icosahedron.Vertices)
-        {
-            Gizmos.DrawSphere(vertex, 0.1F);   
-        }
-        
-        var index = Mathf.FloorToInt(_t) % 20;
-        var triangle = _icosahedron.Triangles[index];
-        for (int i = 0; i < 3; ++i)
-        {
-            var point = triangle.Points[i];
-            Gizmos.color = i == 0 ? Color.red : Color.blue;
-            Gizmos.DrawSphere(point, 0.2F);
-        }
-        // Debug.Log(_icosahedron.Triangles.Count);
-        //
-        // Gizmos.color = Color.green;
-        // foreach (var triangle2 in _icosahedron.Triangles2)
-        // // var triangle2 = _icosahedron.Triangles2[index * 4];
-        // {
-        //     foreach (var point in triangle2.Points)
-        //     {
-        //         Gizmos.DrawSphere(point, 0.3F);
-        //     }
-        // }
-    }
-    
-    private Icosahedron _icosahedron;
-    private float _t;
+
+    private readonly Dictionary<EdgeKey, MazeWall> _edgeToWall = new();
+    private readonly Dictionary<FaceKey, MazeCell> _faceToCell = new();
+    private readonly List<Vector3> _vertices = new();
+    private readonly List<int> _indices = new();
 }
