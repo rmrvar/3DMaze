@@ -16,22 +16,22 @@ public class MazeGenerator : MonoBehaviour
     private int _wallSmoothness = 5;
     [SerializeField]
     private Transform _spherePrefab;
+    [SerializeField, Range(0, 1)]
+    private float _skipThreshold = 0.15F;
     
     private void Awake()
     {
-        // var triangularGrid = new TriangularGrid(_size);
-        // triangularGrid.MeshData.OnTriangleAdded += OnTriangleAdded;
-        // triangularGrid.GenerateMesh();
-
-        var icosahedron = new Icosahedron(_radius, _numSubdivisions);
-        icosahedron.MeshData.OnTriangleAdded += OnTriangleAdded;
-        icosahedron.GenerateMesh();
+        _icosahedron = new Icosahedron(_radius, _numSubdivisions);
+        _icosahedron.MeshData.OnTriangleAdded += OnTriangleAdded;
+        _icosahedron.GenerateMesh();
         
         foreach (var (_, wall) in _edgeToWall)
         {
-            wall.Construct(icosahedron.MeshData, _vertices, _indices);
+            wall.Construct(_icosahedron.MeshData, _vertices, _indices);
         }
 
+        SkipCellsOnPoles();
+        
         DoKruskal();
 
         var mesh = new Mesh();
@@ -107,9 +107,22 @@ public class MazeGenerator : MonoBehaviour
         foreach (var index in shuffledIndices)
         {
             var wall = _edgeToWall[edges[index]];
+
+            var isSkipped1 = _skippedCells.Contains(wall.Cell1);
+            var isSkipped2 = _skippedCells.Contains(wall.Cell2);
+            
+            if (isSkipped1 && isSkipped2)
+            {  // Don't fill the borders.
+                wall.SetRaisedness(false);
+                continue;
+            }
+            
+            // Handle borders.
             var cell1 = wall.Cell1;
             var cell2 = wall.Cell2;
-            if (cell2 == null)
+            if (cell2 == null ||          // Only possible in non-fully connected mazes
+                isSkipped1 != isSkipped2
+              )
             {
                 wall.SetRaisedness(true);
                 continue;  // Can't divide.
@@ -137,8 +150,29 @@ public class MazeGenerator : MonoBehaviour
         }
     }
 
+    private void SkipCellsOnPoles()
+    {
+        foreach (var cell in _faceToCell.Values)
+        {
+            var p1 = _icosahedron.MeshData.Vertices[cell.I1];
+            var p2 = _icosahedron.MeshData.Vertices[cell.I2];
+            var p3 = _icosahedron.MeshData.Vertices[cell.I3];
+            var midpoint = (p1 + p2 + p3) / 3.0F;
+
+            var dot = Vector3.Dot(midpoint.normalized, Vector3.up);
+
+            if (dot > 1 - _skipThreshold || dot < -1 + _skipThreshold)
+            {
+                _skippedCells.Add(cell);
+            }
+        }
+        Debug.Log("Skipped " + _skippedCells.Count + " faces");
+    }
+
     private readonly Dictionary<EdgeKey, MazeWall> _edgeToWall = new();
     private readonly Dictionary<FaceKey, MazeCell> _faceToCell = new();
     private readonly List<Vector3> _vertices = new();
     private readonly List<int> _indices = new();
+    private readonly HashSet<MazeCell> _skippedCells = new();
+    private Icosahedron _icosahedron;
 }
