@@ -4,18 +4,18 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     [SerializeField]
-    private float _sensitivity = 2.0f;
+    private float _sensitivity = 2.0F;
     [SerializeField]
-    private float _minPitch = -30.0f;
+    private float _minPitch = -60.0F;
     [SerializeField]
-    private float _maxPitch = 60.0f;
+    private float _maxPitch = +60.0F;
 
     [SerializeField]
-    private float _initialRotationY = 90;
+    private float _initialRotationX = 90;
 
     private void Awake()
     {
-        _rotationY = _initialRotationY;
+        _rotationX = _initialRotationX;
     }
 
     private void Update()

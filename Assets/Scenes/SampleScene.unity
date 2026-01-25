@@ -442,13 +442,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1389646094813941488, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
+      propertyPath: _minPitch
+      value: -89
+      objectReference: {fileID: 0}
+    - target: {fileID: 1389646094813941488, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
+      propertyPath: _initialRotationX
+      value: -90
+      objectReference: {fileID: 0}
     - target: {fileID: 2179829061722068987, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2179829061722068987, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 2179829061722068987, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
       propertyPath: m_LocalPosition.z
