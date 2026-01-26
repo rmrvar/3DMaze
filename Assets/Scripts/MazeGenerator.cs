@@ -177,6 +177,8 @@ public class MazeGenerator : MonoBehaviour
 
     private IEnumerator IE_DoKruskal(int wallsPerSecond)
     {
+        Debug.Log("Started generating!");
+        
         var faceToBranch = new Dictionary<FaceKey, int>();
         int faceCounter = 0;
         foreach (var face in _faceToCell.Keys)
@@ -259,14 +261,27 @@ public class MazeGenerator : MonoBehaviour
             }
         } 
         Debug.Log("Finished generating!");
+
+        _shouldFinishInstantly = false;
+        _isDone = true;
+    }
+
+    public IEnumerator IE_FlushKruskal()
+    {
+        _shouldFinishInstantly = true;
+        
+        yield return new WaitUntil(() => _isDone);
+
+        _isDone = false;
+        _kruskalRoutine = null;
+        
         _mesh.SetVertices(_vertices);
         _mesh.SetUVs(0, _uvs1);
-        // _mesh.SetUVs(1, _uvs2);  // Stays the same
+        // _mesh.SetUVs(1, _uvs2);                                       // Stays the same
         // _mesh.SetIndices(_indices.ToArray(), MeshTopology.Quads, 0);  // Stays the same
         _mesh.RecalculateNormals();
         GetComponent<MeshFilter>().mesh = _mesh;
         GetComponent<MeshCollider>().sharedMesh = _mesh;
-        _shouldFinishInstantly = false;
         
         float elapsed = 0;
         while (elapsed < _animDuration)
@@ -305,12 +320,16 @@ public class MazeGenerator : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        // if (Input.GetKeyDown(KeyCode.Space))
+        // {
+        //     Debug.Log("Started changing!");
+        //     StartCoroutine(IE_DoKruskal(_wallsPerSecond));
+        // }
+        //
+        if (_kruskalRoutine == null)
         {
-            Debug.Log("Started changing!");
-            StartCoroutine(IE_DoKruskal(_wallsPerSecond));
+            _kruskalRoutine = StartCoroutine(IE_DoKruskal(_wallsPerSecond));
         }
-        
     }
 
     private readonly Dictionary<EdgeKey, MazeWall> _edgeToWall = new();
@@ -324,4 +343,6 @@ public class MazeGenerator : MonoBehaviour
     private Icosahedron _icosahedron;
     private Mesh _mesh;
     private bool _shouldFinishInstantly;
+    private bool _isDone;
+    private Coroutine _kruskalRoutine;
 }
