@@ -178,7 +178,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7831202562452823334}
-  - component: {fileID: 7998774704346125855}
+  - component: {fileID: 8441997359617828523}
   - component: {fileID: 5460293135265019927}
   - component: {fileID: 2657921856460366927}
   - component: {fileID: 7131344128649702138}
@@ -208,7 +208,7 @@ Transform:
   - {fileID: 4990187985812782350}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7998774704346125855
+--- !u!114 &8441997359617828523
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -224,8 +224,8 @@ MonoBehaviour:
   _animator: {fileID: 7225444964343366996}
   _otherButton: {fileID: 0}
   _mazeGenerator: {fileID: 0}
-  _sinkSpeed: 3
-  _isHidden: 0
+  _sinkSpeed: 0.4
+  _isHidden: 1
 --- !u!33 &5460293135265019927
 MeshFilter:
   m_ObjectHideFlags: 0

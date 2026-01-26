@@ -45,9 +45,10 @@ Shader "Custom/AnimateMazeWalls"
 
                 float t = smoothstep(0, 1, _AnimProgress);
 
-                // 1 - 0 =  1 (Growing)
+                // 1 - 0 = +1 (Growing)
                 // 0 - 1 = -1 (Shrinking)
                 // 0 - 0 =  0 (No change)
+                // 1 - 1 =  0 (No change)
                 float stateDelta = v.stateData.y - v.stateData.x;
                 float heightOffset = stateDelta * _WallHeight * (1.0 - t);
                 float3 displacedPos = v.positionOS.xyz - (v.upVector * heightOffset);

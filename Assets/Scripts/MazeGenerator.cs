@@ -177,6 +177,7 @@ public class MazeGenerator : MonoBehaviour
 
     private IEnumerator IE_DoKruskal(int wallsPerSecond)
     {
+        _isDone = false;
         Debug.Log("Started generating!");
         
         var faceToBranch = new Dictionary<FaceKey, int>();
@@ -268,13 +269,11 @@ public class MazeGenerator : MonoBehaviour
 
     public IEnumerator IE_FlushKruskal()
     {
+        Debug.Log("Started flushing!");
         _shouldFinishInstantly = true;
         
         yield return new WaitUntil(() => _isDone);
 
-        _isDone = false;
-        _kruskalRoutine = null;
-        
         _mesh.SetVertices(_vertices);
         _mesh.SetUVs(0, _uvs1);
         // _mesh.SetUVs(1, _uvs2);                                       // Stays the same
@@ -283,6 +282,7 @@ public class MazeGenerator : MonoBehaviour
         GetComponent<MeshFilter>().mesh = _mesh;
         GetComponent<MeshCollider>().sharedMesh = _mesh;
         
+        _mazeMaterial.SetFloat("_AnimProgress", 0);
         float elapsed = 0;
         while (elapsed < _animDuration)
         {
@@ -292,6 +292,11 @@ public class MazeGenerator : MonoBehaviour
             yield return null;
         }
         _mazeMaterial.SetFloat("_AnimProgress", 1);
+        
+        _kruskalRoutine = null;
+        _shouldFinishInstantly = false;
+        
+        Debug.Log("Finished flushing!");
     }
     
     private void SkipCellsOnPoles()

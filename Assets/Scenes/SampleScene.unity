@@ -291,7 +291,7 @@ MonoBehaviour:
   _spherePrefab: {fileID: 3612808303316500759, guid: ac1ba46808aea5e49a4f854769af5e94, type: 3}
   _skipThreshold: 0.1
   _wallsPerSecond: 120
-  _animDuration: 0.8
+  _animDuration: 2.5
   _mazeMaterial: {fileID: 2100000, guid: ba4fa05f6ae02db40b6b4b1d518a2826, type: 2}
 --- !u!4 &651902714
 Transform:
@@ -800,10 +800,30 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1502563180}
     - target: {fileID: 7998774704346125855, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _sinkSpeed
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7998774704346125855, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: _otherButton
       value: 
       objectReference: {fileID: 6239231517688499678}
     - target: {fileID: 7998774704346125855, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _mazeGenerator
+      value: 
+      objectReference: {fileID: 651902713}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _uiRoot
+      value: 
+      objectReference: {fileID: 1502563180}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _isHidden
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _otherButton
+      value: 
+      objectReference: {fileID: 6239231517688499678}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: _mazeGenerator
       value: 
       objectReference: {fileID: 651902713}
@@ -812,9 +832,9 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
---- !u!114 &1508005439 stripped
+--- !u!114 &1508005437 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7998774704346125855, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+  m_CorrespondingSourceObject: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
   m_PrefabInstance: {fileID: 1508005436}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -921,18 +941,6 @@ PrefabInstance:
       value: Cylinder1
       objectReference: {fileID: 0}
     - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -972,43 +980,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 7998774704346125855, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _uiRoot
+      value: 
+      objectReference: {fileID: 1502563180}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _otherButton
+      value: 
+      objectReference: {fileID: 1508005437}
+    - target: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+      propertyPath: _mazeGenerator
+      value: 
+      objectReference: {fileID: 651902713}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5397105863406065268, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
-      insertIndex: 1
-      addedObject: {fileID: 6239231517688499678}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
---- !u!1 &6239231517688499676 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5397105863406065268, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
-  m_PrefabInstance: {fileID: 6239231517688499675}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &6239231517688499677 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 7225444964343366996, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
-  m_PrefabInstance: {fileID: 6239231517688499675}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &6239231517688499678
+--- !u!114 &6239231517688499678 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 8441997359617828523, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
+  m_PrefabInstance: {fileID: 6239231517688499675}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6239231517688499676}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b4f90024bafe84e4a9e04de2c99433e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonScript
-  _uiRoot: {fileID: 1502563180}
-  _animator: {fileID: 6239231517688499677}
-  _otherButton: {fileID: 1508005439}
-  _mazeGenerator: {fileID: 651902713}
-  _sinkSpeed: 3
-  _isHidden: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

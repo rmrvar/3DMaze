@@ -58,16 +58,21 @@ public class ButtonScript : MonoBehaviour
 
     private IEnumerator IE_PlayAnimation()
     {
+        Debug.Log("Press press!");
         _animator.SetTrigger("PressButton");
-        yield return null;
-        var state = _animator.GetCurrentAnimatorStateInfo(0);
-        while (state.normalizedTime < 1.0F)
+        while (!_animator.GetCurrentAnimatorStateInfo(0).IsName("PressButton"))
         {
             yield return null;
         }
+        AnimatorStateInfo state;
+        do
+        {
+            state = _animator.GetCurrentAnimatorStateInfo(0);
+            yield return null;
+        } while (state.normalizedTime < 1.0f);
 
         StartCoroutine(IE_LowerThis());
-        StartCoroutine(IE_RaiseThat());
+        yield return StartCoroutine(IE_RaiseThat());
         StartCoroutine(_mazeGenerator.IE_FlushKruskal());
     }
 
@@ -89,7 +94,10 @@ public class ButtonScript : MonoBehaviour
     
     private IEnumerator IE_RaiseThat()
     {
-        _otherButton._animator.SetTrigger("Reset");
+        if (_otherButton._animator.GetCurrentAnimatorStateInfo(0).IsName("PressButton"))
+        {
+            _otherButton._animator.SetTrigger("Reset");   
+        }
         float t = 0;
         while (true)
         {
