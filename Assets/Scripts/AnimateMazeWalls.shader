@@ -59,15 +59,14 @@ Shader "Custom/AnimateMazeWalls"
             }
 
             half4 frag (FRAG_IN i) : SV_Target
-            {
+            {   
                 // Pulled random Lambertian lighting from internet. Doesn't matter.
                 float3 normal = normalize(i.normalWS);
                 Light mainLight = GetMainLight();
-                
-                float intensity = saturate(dot(normal, mainLight.direction));
-                
-                float3 ambient = SampleSH(normal);
-                float3 finalColor = _BaseColor.rgb * (mainLight.color * intensity + ambient);
+                float3 lightColor = mainLight.color * saturate(dot(normal, mainLight.direction));
+                // Use a simpler ambient fetch
+                float3 ambient = half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w); 
+                float3 finalColor = _BaseColor.rgb * (lightColor + ambient);
                 
                 return half4(finalColor, _BaseColor.a);
             }
