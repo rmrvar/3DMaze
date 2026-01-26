@@ -16,6 +16,7 @@ public class CameraController : MonoBehaviour
     private void Awake()
     {
         _rotationX = _initialRotationX;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     private void Update()
