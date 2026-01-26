@@ -71,12 +71,12 @@ public class MazeWall
         
         var topVertices1 = new Queue<Vector3>();
         var topIndices1 = new Queue<int>();
-        // var topUvs1_1 = new Queue<Vector2>();
-        // var topUvs2_1 = new Queue<Vector3>();
+        var topUvs1_1 = new Queue<Vector2>();
+        var topUvs2_1 = new Queue<Vector3>();
         var topVertices2 = new Queue<Vector3>();
         var topIndices2 = new Queue<int>();
-        // var topUvs1_2 = new Queue<Vector2>();
-        // var topUvs2_2 = new Queue<Vector3>();
+        var topUvs1_2 = new Queue<Vector2>();
+        var topUvs2_2 = new Queue<Vector3>();
         
         int originalVertexCount = vertices.Count;
         int numSteps = Smoothness;
@@ -101,6 +101,8 @@ public class MazeWall
             uvs2.Add(up1);
             
             topVertices1.Enqueue(pt);
+            topUvs1_1.Enqueue(new Vector2(1, 1));  // Raised at start
+            topUvs2_1.Enqueue(up1);
             topIndices1.Enqueue(vertices.Count - 1);
             
             _topIndexToHeights.Add(vertices.Count - 1, (pb, pt));
@@ -138,28 +140,46 @@ public class MazeWall
             uvs2.Add(up2);
             
             topVertices2.Enqueue(pt);
+            topUvs1_2.Enqueue(new Vector2(1, 1));  // Raised at start
+            topUvs2_2.Enqueue(up2);
             topIndices2.Enqueue(vertices.Count - 1);
             _topIndexToHeights.Add(vertices.Count - 1, (pb, pt));
         }
         // TOP
-        var topVertices = new List<Vector3>();  // TODO: Don't want to share verts with sides.
+        var topVertices = new List<Vector3>();
+        var topUvs1 = new List<Vector2>();
+        var topUvs2 = new List<Vector3>();
         var topIndices = new List<int>();
         while (topVertices1.Count > 0)
         {
             topVertices.Add(topVertices1.Dequeue());
+            topUvs1.Add(topUvs1_1.Dequeue());
+            topUvs2.Add(topUvs2_1.Dequeue());
             topIndices.Add(topIndices1.Dequeue());
         }
         while (topVertices2.Count > 0)
         {
             topVertices.Add(topVertices2.Dequeue());
+            topUvs1.Add(topUvs1_2.Dequeue());
+            topUvs2.Add(topUvs2_2.Dequeue());
             topIndices.Add(topIndices2.Dequeue());
         }
-        for (int i = 0; i <= topIndices.Count - 4; ++i)
+
+        originalVertexCount = vertices.Count;
+        for (int i = 0; i < topVertices.Count; ++i)
         {
-            indices.Add(topIndices[i + 1]);
-            indices.Add(topIndices[i + 2]);
-            indices.Add(topIndices[i + 3]);
-            indices.Add(topIndices[0]);      // Original top
+            vertices.Add(topVertices[i]);
+            uvs1.Add(topUvs1[i]);
+            uvs2.Add(topUvs2[i]);
+            topIndices.Add(originalVertexCount + i);
+            _topIndexToHeights.Add(vertices.Count - 1, (topVertices[i] - topUvs2[i] * Height, topVertices[i]));
+        }
+        for (int i = 0; i <= topVertices.Count - 4; ++i)
+        {
+            indices.Add(originalVertexCount + i + 1);
+            indices.Add(originalVertexCount + i + 2);
+            indices.Add(originalVertexCount + i + 3);
+            indices.Add(originalVertexCount);          // Original top
         }
         _topIndices = topIndices;
     }
