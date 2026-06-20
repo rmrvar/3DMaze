@@ -14,8 +14,10 @@ public class MazeGenerator : MonoBehaviour
     private float _wallHeight = 2;
     [SerializeField, Range(0, 3)]
     private float _wallThickness = 0.1F;
-    [SerializeField, Range(0, 20)] 
-    private int _wallSmoothness = 5;
+    [SerializeField, Range(0, 20)]
+    private int _wallLinearSmoothness = 5;
+    [SerializeField, Range(0, 20)]
+    private int _wallRadialSmoothness = 5;
     [SerializeField]
     private Transform _spherePrefab;
     [SerializeField, Range(0, 1)]
@@ -51,6 +53,7 @@ public class MazeGenerator : MonoBehaviour
         GetComponent<MeshFilter>().mesh = _mesh;
         GetComponent<MeshCollider>().sharedMesh = _mesh;
         
+        // TODO: Rabimo smooth sphere. Unityjev ni dovolj dober.
         var sphere = Instantiate(_spherePrefab);
         sphere.localScale = Vector3.one * (2 * _radius - 1.5F);  // Needs to be a bit less deep so no gaps
         
@@ -73,7 +76,7 @@ public class MazeGenerator : MonoBehaviour
         var key = new EdgeKey(i1, i2);
         if (!_edgeToWall.TryGetValue(key, out var wall))
         {
-            wall = new MazeWall(key.V1, key.V2, _wallHeight, _wallThickness, _wallSmoothness, v => -v.normalized);
+            wall = new MazeWall(key.V1, key.V2, _wallHeight, _wallThickness, _wallLinearSmoothness, _wallRadialSmoothness, v => -v.normalized);
             _edgeToWall.Add(key, wall);
         }
         return wall;

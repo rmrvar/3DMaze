@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Mathf = UnityEngine.Mathf;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 public class MazeWall
 {
-    public MazeWall(int i1, int i2, float height, float thickness, int smoothness, Func<Vector3, Vector3> getNormal)
+    public MazeWall(int i1, int i2, float height, float thickness, int linearSmoothness, int radialSmoothness, Func<Vector3, Vector3> getNormal)
     {
         // Need to order so that winding order will be guaranteed.
         if (i1 < i2)
@@ -20,7 +21,12 @@ public class MazeWall
         }
         Height = height;
         Thickness = thickness;
-        Smoothness = smoothness;
+        LinearSmoothness = linearSmoothness;
+        RadialSmoothness = radialSmoothness;
+        if (RadialSmoothness % 2 == 0)
+        {
+            RadialSmoothness++; // Needs to be odd.
+        }
         _getNormal = getNormal;
     }
     
@@ -28,7 +34,8 @@ public class MazeWall
     public int I2 { get; set; }
     public float Height { get; private set; }
     public float Thickness { get; private set; }
-    public int Smoothness { get; private set; }
+    public int LinearSmoothness { get; private set; }
+    public int RadialSmoothness { get; private set; }
     public MazeCell Cell1 { get; set; }
     public MazeCell Cell2 { get; set; }
 
@@ -63,11 +70,14 @@ public class MazeWall
         
         var v1 = meshData.Vertices[I1];
         var v2 = meshData.Vertices[I2];
+
+        List<Vector3> radialDeltas1 = GetDeterministicRadialDeltas(v1, RadialSmoothness);
+        List<Vector3> radialDeltas2 = GetDeterministicRadialDeltas(v2, RadialSmoothness);
+
+
         
         var forward = (v2 - v1).normalized;
-        var up1 = _getNormal(v1);
-        var up2 = _getNormal(v2);
-        var right = Vector3.Cross(up1, forward).normalized;
+        var right = Vector3.Cross(_getNormal(v1), forward).normalized;
         
         var topVertices1 = new Queue<Vector3>();
         var topIndices1 = new Queue<int>();
@@ -79,15 +89,21 @@ public class MazeWall
         var topUvs2_2 = new Queue<Vector3>();
         
         int originalVertexCount = vertices.Count;
-        int numSteps = Smoothness;
+        int numSteps = Mathf.CeilToInt(RadialSmoothness * 0.5F);
         // HALF-CYLINDER 1
         for (int i = 0; i <= numSteps; ++i)
         {
             var t = (float) i / numSteps * Mathf.PI;
-            var offset = (Mathf.Cos(t) * right + Mathf.Sin(t) * -forward) * Thickness * 0.5F;
-            
-            var pb = v1 + offset;
-            var pt = pb + up1 * Height;
+
+            var delta = Mathf.Cos(t) * right + Mathf.Sin(t) * -forward;
+            GetNearestDelta(delta, radialDeltas1, out delta);
+
+            var offset = delta * Thickness * 0.5F;
+
+
+            var pb = (v1 + offset).normalized * v1.magnitude;
+            var normal = _getNormal(pb);
+            var pt = pb + normal * Height;
 
             indices.Add(vertices.Count + 2);  // next pb
             indices.Add(vertices.Count + 3);  // next pt
@@ -95,14 +111,14 @@ public class MazeWall
             indices.Add(vertices.Count + 0);  // pb
             vertices.Add(pb);
             uvs1.Add(new Vector2(1, 1));  // Raised at start
-            uvs2.Add(up1);
+            uvs2.Add(normal);
             vertices.Add(pt);
             uvs1.Add(new Vector2(1, 1));  // Raised at start
-            uvs2.Add(up1);
+            uvs2.Add(normal);
             
             topVertices1.Enqueue(pt);
             topUvs1_1.Enqueue(new Vector2(1, 1));  // Raised at start
-            topUvs2_1.Enqueue(up1);
+            topUvs2_1.Enqueue(normal);
             topIndices1.Enqueue(vertices.Count - 1);
             
             _topIndexToHeights.Add(vertices.Count - 1, (pb, pt));
@@ -111,10 +127,15 @@ public class MazeWall
         for (int i = 0; i <= numSteps; ++i)
         {
             var t = (float) i / numSteps * Mathf.PI;
-            var offset = (Mathf.Cos(t) * -right + Mathf.Sin(t) * forward) * Thickness * 0.5F;
-            
-            var pb = v2 + offset;
-            var pt = pb + up2 * Height;
+
+            var delta = Mathf.Cos(t) * -right + Mathf.Sin(t) * forward;
+            GetNearestDelta(delta, radialDeltas2, out delta);
+
+            var offset = delta * Thickness * 0.5F;
+
+            var pb = (v2 + offset).normalized * v2.magnitude;
+            var normal = _getNormal(pb);
+            var pt = pb + normal * Height;
             
             if (i == numSteps)
             {
@@ -134,14 +155,14 @@ public class MazeWall
             
             vertices.Add(pb);
             uvs1.Add(new Vector2(1, 1));  // Raised at start
-            uvs2.Add(up2);
+            uvs2.Add(normal);
             vertices.Add(pt);
             uvs1.Add(new Vector2(1, 1));  // Raised at start
-            uvs2.Add(up2);
+            uvs2.Add(normal);
             
             topVertices2.Enqueue(pt);
             topUvs1_2.Enqueue(new Vector2(1, 1));  // Raised at start
-            topUvs2_2.Enqueue(up2);
+            topUvs2_2.Enqueue(normal);
             topIndices2.Enqueue(vertices.Count - 1);
             _topIndexToHeights.Add(vertices.Count - 1, (pb, pt));
         }
@@ -182,6 +203,55 @@ public class MazeWall
             indices.Add(originalVertexCount);          // Original top
         }
         _topIndices = topIndices;
+    }
+
+    private static List<Vector3> GetDeterministicRadialDeltas(Vector3 center, int radialSmoothness)
+    {
+        Vector3 normal = -center.normalized;
+        Vector3 up;
+        Vector3 right;
+        if (Vector3.Distance(normal, Vector3.right) > 0.5F)
+        {
+            up = Vector3.Cross(normal, Vector3.right);
+            right = Vector3.Cross(normal, up);
+        }
+        else
+        {
+            up = Vector3.Cross(normal, Vector3.up);
+            right = Vector3.Cross(normal, up);
+        }
+
+        float radiansPerStep = (360 * Mathf.Deg2Rad) / radialSmoothness;
+
+        List<Vector3> deltas = new(radialSmoothness);
+        for (int i = 0; i < radialSmoothness; ++i)
+        {
+            float theta = i * radiansPerStep;
+
+            Vector3 delta = (Mathf.Cos(theta) * up + Mathf.Sin(theta) * right).normalized;
+            deltas.Add(delta);
+        }
+
+        return deltas;
+    }
+
+    private static int GetNearestDelta(Vector3 delta, IReadOnlyList<Vector3> deltas, out Vector3 nearestDelta)
+    {
+        nearestDelta = Vector3.zero;
+        int minIndex = -1;
+        float minTheta = float.MaxValue;
+        for (int i = 0; i < deltas.Count; ++i)
+        {
+            Vector3 delta2 = deltas[i];
+            float theta = Vector3.Angle(delta, delta2);
+            if (theta < minTheta)
+            {
+                minTheta = theta;
+                minIndex = i;
+                nearestDelta = delta2;
+            }
+        }
+        return minIndex;
     }
 
     private readonly Func<Vector3, Vector3> _getNormal;
