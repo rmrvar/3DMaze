@@ -41,8 +41,8 @@ Shader "Custom/MazeWall"
                 float3 positionWS : TEXCOORD0;
             };
 
-            #define MAX_RAYMARCH_STEPS 100
-            #define RAYMARCH_THRESHOLD 0.0025
+            #define MAX_RAYMARCH_STEPS 150
+            #define RAYMARCH_THRESHOLD 0.01
 
             CBUFFER_START(UnityPerMaterial)
 				float3 _MazeCenter;
@@ -75,39 +75,35 @@ Shader "Custom/MazeWall"
                 float dy = dot(position - _WallCenter, _WallUp);
                 float dz = dot(position - _WallCenter, _WallForward);
 
-                // Box
-                float xExtentSD = abs(dx) - _WallExtents.x;
+
+                // Spheres
+                float innerSphereSD = (_MazeRadius - _WallHeight) - length(position - _MazeCenter);
+                float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
+				
+                // Box with slant on X
+                float xExtentSD = abs(dx) - _WallRadius - _WallRadius * (outerSphereSD / _MazeRadius);
                 float yExtentSD = abs(dy) - _WallExtents.y;
                 float zExtentSD = abs(dz) - _WallExtents.z;
                 float boxSD = max(xExtentSD, max(yExtentSD, zExtentSD));
 
-                // Sphere
-                float innerSphereSD = _MazeRadius - length(position - _MazeCenter);
-				
+                // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z).
+                float a = 1;
+                float b = -2 * _MazeRadius;
+                float c = _WallExtents.z * _WallExtents.z;
+                float root1 = (-b + sqrt(b * b - 4 * a * c)) / 2 * a;
+                float root2 = (-b - sqrt(b * b - 4 * a * c)) / 2 * a;
+                float root = max(root1, root2);
+				float deltaY = root;
+
                 // Slants
-                float3 tangent1 = normalize(+_WallRadius * _WallRight + (abs(DY) + _WallExtents.y) * -_WallUp);
-                float3 tangent2 = normalize(-_WallRadius * _WallRight + (abs(DY) + _WallExtents.y) * -_WallUp);
-                float3 normal1 = -normalize(cross(tangent1, _WallForward));
-                float3 normal2 = +normalize(cross(tangent2, _WallForward));
+                float3 tangent1 = normalize(+_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
+                float3 tangent2 = normalize(-_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
+                float3 normal1 = +normalize(cross(tangent1, _WallRight));
+                float3 normal2 = -normalize(cross(tangent2, _WallRight));
                 float proj1 = dot(position - _MazeCenter, normal1);
                 float proj2 = dot(position - _MazeCenter, normal2);
 
-                float3 tangent3 = normalize(+_WallExtents.z * _WallForward + (abs(DY) + _WallExtents.y) * -_WallUp);
-                float3 tangent4 = normalize(-_WallExtents.z * _WallForward + (abs(DY) + _WallExtents.y) * -_WallUp);
-                float3 normal3 = +normalize(cross(tangent3, _WallRight));
-                float3 normal4 = -normalize(cross(tangent4, _WallRight));
-
-                float theta = lerp(0.5 * PI, 0, abs(dx) / _WallRadius);
-
-                // This one is a slant also, but trying to make a _WallRadius circle on ends of Z axis by adding fake distance
-                float proj3 = dot(position - _MazeCenter, normal3) + (1 - sin(theta)) * _WallRadius * (abs(DY) + _WallExtents.y) / (abs(DY) + dy);
-                float proj4 = dot(position - _MazeCenter, normal4) + (1 - sin(theta)) * _WallRadius * (abs(DY) + _WallExtents.y) / (abs(DY) + dy);
-
-                // Intersection
-            	//return max(boxSD, proj4);
-            	return max(max(boxSD, innerSphereSD), max(max(proj1, proj2), max(proj3, proj4)));
-            	//return max(boxSD, max(proj3, proj4));
-            	//return max(boxSD, max(innerSphereSD, xSliceSD));
+                return max(max(boxSD, max(proj1, proj2)), max(innerSphereSD, outerSphereSD));
 			}
 
             float3 GetNormal(float3 p)
