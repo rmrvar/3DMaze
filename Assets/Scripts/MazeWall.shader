@@ -41,8 +41,8 @@ Shader "Custom/MazeWall"
                 float3 positionWS : TEXCOORD0;
             };
 
-            #define MAX_RAYMARCH_STEPS 150
-            #define RAYMARCH_THRESHOLD 0.01
+            #define MAX_RAYMARCH_STEPS 500
+            #define RAYMARCH_THRESHOLD 0.00001
 
             CBUFFER_START(UnityPerMaterial)
 				float3 _MazeCenter;
@@ -69,15 +69,14 @@ Shader "Custom/MazeWall"
 
             float SDF(float3 position)
 			{
-                float DY = dot(_WallCenter - _MazeCenter, _WallUp);
+                float height = _AnimProgress * _WallHeight;
 
                 float dx = dot(position - _WallCenter, _WallRight);
                 float dy = dot(position - _WallCenter, _WallUp);
                 float dz = dot(position - _WallCenter, _WallForward);
 
-
                 // Spheres
-                float innerSphereSD = (_MazeRadius - _WallHeight) - length(position - _MazeCenter);
+                float innerSphereSD = (_MazeRadius - height) - length(position - _MazeCenter);
                 float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
 				
                 // Box with slant on X
@@ -100,10 +99,55 @@ Shader "Custom/MazeWall"
                 float3 tangent2 = normalize(-_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
                 float3 normal1 = +normalize(cross(tangent1, _WallRight));
                 float3 normal2 = -normalize(cross(tangent2, _WallRight));
-                float proj1 = dot(position - _MazeCenter, normal1);
-                float proj2 = dot(position - _MazeCenter, normal2);
 
-                return max(max(boxSD, max(proj1, proj2)), max(innerSphereSD, outerSphereSD));
+
+                float theta = 2 * asin(_WallRadius / _MazeRadius);
+                float3 coneForward1 = -normal1 * sin(theta) + tangent1 * cos(theta);
+                float3 coneForward2 = -normal2 * sin(theta) + tangent2 * cos(theta);
+
+                //float3 coneForward = float3(0, -1, 0);
+
+            	float3 fromTo = position - _MazeCenter;
+
+                float prllDelta1 = dot(fromTo, coneForward1);
+                float3 prllComponent1 = coneForward1 * prllDelta1;
+                float3 perpComponent1 = fromTo - prllComponent1;
+
+                float perpRadius1 = abs(prllDelta1) / _MazeRadius * _WallRadius;
+                float3 newTangent1 = normalize(perpComponent1) * perpRadius1 + prllComponent1;
+                float3 newRight1 = cross(normalize(newTangent1), normalize(perpComponent1));
+                float3 newNormal1 = -normalize(cross(newTangent1, newRight1));
+                float dist1_1 = dot(fromTo, newNormal1);
+                float dist2_1 = -prllDelta1;
+                float dist1 = max(dist1_1, dist2_1);
+
+                float prllDelta2 = dot(fromTo, coneForward2);
+                float3 prllComponent2 = coneForward2 * prllDelta2;
+                float3 perpComponent2 = fromTo - prllComponent2;
+
+                float perpRadius2 = abs(prllDelta2) / _MazeRadius * _WallRadius;
+                float3 newTangent2 = normalize(perpComponent2) * perpRadius2 + prllComponent2;
+                float3 newRight2 = cross(normalize(newTangent2), normalize(perpComponent2));
+                float3 newNormal2 = -normalize(cross(newTangent2, newRight2));
+                float dist1_2 = dot(fromTo, newNormal2);
+                float dist2_2 = -prllDelta2;
+                float dist2 = max(dist1_2, dist2_2);
+
+
+                // Actual slants
+                float3 anotherNormal1 = normalize(cross(coneForward1, _WallRight));
+                float3 anotherNormal2 = normalize(cross(coneForward2, _WallRight));
+                float proj1 = +dot(position - _MazeCenter, anotherNormal1);
+                float proj2 = -dot(position - _MazeCenter, anotherNormal2);
+
+                //return dist;
+                return max(max(boxSD, max(min(dist1, proj1), min(dist2, proj2))), max(innerSphereSD, outerSphereSD));
+
+                // Probaj izracuniti cilindre tako da vzames naslednjo tocko theta stran (daljica _WallRadius) in 
+                // izracunaj polovico daljice ter malo naprej potegni od sredisca da pokrijes vse s cilindrom. Potem
+                // pa pac tiste ki imajo z manjse od min z cilindra.
+
+                //return max(max(boxSD, max(proj1, proj2)), max(innerSphereSD, outerSphereSD));
 			}
 
             float3 GetNormal(float3 p)
@@ -133,7 +177,7 @@ Shader "Custom/MazeWall"
 				//[unroll]
 				for ( ; i < MAX_RAYMARCH_STEPS; ++i)
 				{
-					float dist = SDF(posWS);
+					float dist = abs(SDF(posWS));
                     if (dist < RAYMARCH_THRESHOLD)
                     {
 	                    break;
