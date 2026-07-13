@@ -41,8 +41,8 @@ Shader "Custom/MazeWall"
                 float3 positionWS : TEXCOORD0;
             };
 
-            #define MAX_RAYMARCH_STEPS 500
-            #define RAYMARCH_THRESHOLD 0.00001
+            #define MAX_RAYMARCH_STEPS 160
+            #define RAYMARCH_THRESHOLD 0.005
 
             CBUFFER_START(UnityPerMaterial)
 				float3 _MazeCenter;
@@ -86,7 +86,8 @@ Shader "Custom/MazeWall"
                 float boxSD = max(xExtentSD, max(yExtentSD, zExtentSD));
 
                 // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z).
-                float a = 1;
+                // Finds intersection of Y axis on z extents.
+            	float a = 1;
                 float b = -2 * _MazeRadius;
                 float c = _WallExtents.z * _WallExtents.z;
                 float discriminant = max(0, b * b - 4 * a * c);
@@ -94,10 +95,6 @@ Shader "Custom/MazeWall"
                 float root2 = (-b - sqrt(discriminant)) / (2 * a);
                 float root = max(root1, root2);
 				float deltaY = root;
-                //float R = _MazeRadius;
-				//float z = _WallExtents.z;
-				//float radicand = max(0, R * R - z * z);
-				//float deltaY = R - sqrt(radicand);
 
                 // Slants
                 float3 tangent1 = normalize(+_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
@@ -105,12 +102,14 @@ Shader "Custom/MazeWall"
                 float3 normal1 = +normalize(cross(tangent1, _WallRight));
                 float3 normal2 = -normalize(cross(tangent2, _WallRight));
 
+                // Moves left/right from z extents by minimum angle to fit _WallRadius
                 float theta = 2 * asin(_WallRadius / _MazeRadius);
                 float3 coneForward1 = normal1 * sin(theta) + tangent1 * cos(theta);
                 float3 coneForward2 = normal2 * sin(theta) + tangent2 * cos(theta);
 
             	float3 fromTo = position - _MazeCenter;
 
+                // Half-Cone 1
                 float prllDelta1 = dot(fromTo, coneForward1);
                 float3 prllComponent1 = coneForward1 * prllDelta1;
                 float3 perpComponent1 = fromTo - prllComponent1;
@@ -123,6 +122,7 @@ Shader "Custom/MazeWall"
                 float dist2_1 = prllDelta1;
                 float dist1 = max(dist1_1, dist2_1);
 
+                // Half-Cone 2
                 float prllDelta2 = dot(fromTo, coneForward2);
                 float3 prllComponent2 = coneForward2 * prllDelta2;
                 float3 perpComponent2 = fromTo - prllComponent2;
@@ -135,14 +135,11 @@ Shader "Custom/MazeWall"
                 float dist2_2 = prllDelta2;
                 float dist2 = max(dist1_2, dist2_2);
 
-                // Actual slants
+                // Actual slants (the other half of cones + everything else)
                 float3 anotherNormal1 = normalize(cross(coneForward1, _WallRight));
                 float3 anotherNormal2 = normalize(cross(coneForward2, _WallRight));
                 float proj1 = +dot(position - _MazeCenter, anotherNormal1);
                 float proj2 = -dot(position - _MazeCenter, anotherNormal2);
-
-                //return dist1;
-                //return min(dist1, proj1);
 
                 return max(max(boxSD, max(min(dist1, proj1), min(dist2, proj2))), max(innerSphereSD, outerSphereSD));
 			}
