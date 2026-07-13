@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public class MazeGenerator : MonoBehaviour
@@ -26,9 +27,11 @@ public class MazeGenerator : MonoBehaviour
     private int _wallsPerSecond = 30;
     [SerializeField]
     private float _animDuration = 0.5F;
+    [FormerlySerializedAs("_mazeMaterial")] [SerializeField]
+    private Material _wallMaterial;
     [SerializeField]
-    private Material _mazeMaterial;
-    
+    private Material _floorMaterial;
+
     private void Awake()
     {
         _icosahedron = new Icosahedron(_radius, _numSubdivisions);
@@ -55,9 +58,10 @@ public class MazeGenerator : MonoBehaviour
         
         // TODO: Rabimo smooth sphere. Unityjev ni dovolj dober.
         var sphere = Instantiate(_spherePrefab);
+        sphere.GetComponentInChildren<Renderer>().sharedMaterial = _floorMaterial;
         sphere.localScale = Vector3.one * (2 * _radius - 1.5F);  // Needs to be a bit less deep so no gaps
         
-        _mazeMaterial.SetFloat("_WallHeight", _wallHeight);
+        _wallMaterial.SetFloat("_WallHeight", _wallHeight);
     }
 
     private void OnTriangleAdded(int i1, int i2, int i3)
@@ -285,16 +289,16 @@ public class MazeGenerator : MonoBehaviour
         GetComponent<MeshFilter>().mesh = _mesh;
         GetComponent<MeshCollider>().sharedMesh = _mesh;
         
-        _mazeMaterial.SetFloat("_AnimProgress", 0);
+        _wallMaterial.SetFloat("_AnimProgress", 0);
         float elapsed = 0;
         while (elapsed < _animDuration)
         {
             elapsed += Time.deltaTime;
             float progress = Mathf.Clamp01(elapsed / _animDuration);
-            _mazeMaterial.SetFloat("_AnimProgress", progress);
+            _wallMaterial.SetFloat("_AnimProgress", progress);
             yield return null;
         }
-        _mazeMaterial.SetFloat("_AnimProgress", 1);
+        _wallMaterial.SetFloat("_AnimProgress", 1);
         
         _kruskalRoutine = null;
         _shouldFinishInstantly = false;

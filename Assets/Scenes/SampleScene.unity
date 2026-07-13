@@ -287,12 +287,14 @@ MonoBehaviour:
   _numSubdivisions: 3
   _wallHeight: 6
   _wallThickness: 1
-  _wallSmoothness: 5
+  _wallLinearSmoothness: 5
+  _wallRadialSmoothness: 5
   _spherePrefab: {fileID: 3612808303316500759, guid: ac1ba46808aea5e49a4f854769af5e94, type: 3}
   _skipThreshold: 0.1
   _wallsPerSecond: 60
   _animDuration: 2.5
-  _mazeMaterial: {fileID: 2100000, guid: ba4fa05f6ae02db40b6b4b1d518a2826, type: 2}
+  _wallMaterial: {fileID: 2100000, guid: ba4fa05f6ae02db40b6b4b1d518a2826, type: 2}
+  _floorMaterial: {fileID: 2100000, guid: 134a9c00f6e6d224c9fdf0d368157188, type: 2}
 --- !u!4 &651902714
 Transform:
   m_ObjectHideFlags: 0
