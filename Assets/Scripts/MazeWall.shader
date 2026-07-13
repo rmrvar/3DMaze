@@ -22,12 +22,12 @@ Shader "Custom/MazeWall"
         Pass
         {
             HLSLPROGRAM
-            
+
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            
+
             struct VERT_IN
             {
                 float4 positionOS : POSITION;
@@ -89,10 +89,15 @@ Shader "Custom/MazeWall"
                 float a = 1;
                 float b = -2 * _MazeRadius;
                 float c = _WallExtents.z * _WallExtents.z;
-                float root1 = (-b + sqrt(b * b - 4 * a * c)) / 2 * a;
-                float root2 = (-b - sqrt(b * b - 4 * a * c)) / 2 * a;
+                float discriminant = max(0, b * b - 4 * a * c);
+                float root1 = (-b + sqrt(discriminant)) / (2 * a);
+                float root2 = (-b - sqrt(discriminant)) / (2 * a);
                 float root = max(root1, root2);
 				float deltaY = root;
+                //float R = _MazeRadius;
+				//float z = _WallExtents.z;
+				//float radicand = max(0, R * R - z * z);
+				//float deltaY = R - sqrt(radicand);
 
                 // Slants
                 float3 tangent1 = normalize(+_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
@@ -100,12 +105,9 @@ Shader "Custom/MazeWall"
                 float3 normal1 = +normalize(cross(tangent1, _WallRight));
                 float3 normal2 = -normalize(cross(tangent2, _WallRight));
 
-
                 float theta = 2 * asin(_WallRadius / _MazeRadius);
-                float3 coneForward1 = -normal1 * sin(theta) + tangent1 * cos(theta);
-                float3 coneForward2 = -normal2 * sin(theta) + tangent2 * cos(theta);
-
-                //float3 coneForward = float3(0, -1, 0);
+                float3 coneForward1 = normal1 * sin(theta) + tangent1 * cos(theta);
+                float3 coneForward2 = normal2 * sin(theta) + tangent2 * cos(theta);
 
             	float3 fromTo = position - _MazeCenter;
 
@@ -118,7 +120,7 @@ Shader "Custom/MazeWall"
                 float3 newRight1 = cross(normalize(newTangent1), normalize(perpComponent1));
                 float3 newNormal1 = -normalize(cross(newTangent1, newRight1));
                 float dist1_1 = dot(fromTo, newNormal1);
-                float dist2_1 = -prllDelta1;
+                float dist2_1 = prllDelta1;
                 float dist1 = max(dist1_1, dist2_1);
 
                 float prllDelta2 = dot(fromTo, coneForward2);
@@ -130,9 +132,8 @@ Shader "Custom/MazeWall"
                 float3 newRight2 = cross(normalize(newTangent2), normalize(perpComponent2));
                 float3 newNormal2 = -normalize(cross(newTangent2, newRight2));
                 float dist1_2 = dot(fromTo, newNormal2);
-                float dist2_2 = -prllDelta2;
+                float dist2_2 = prllDelta2;
                 float dist2 = max(dist1_2, dist2_2);
-
 
                 // Actual slants
                 float3 anotherNormal1 = normalize(cross(coneForward1, _WallRight));
@@ -140,14 +141,10 @@ Shader "Custom/MazeWall"
                 float proj1 = +dot(position - _MazeCenter, anotherNormal1);
                 float proj2 = -dot(position - _MazeCenter, anotherNormal2);
 
-                //return dist;
+                //return dist1;
+                //return min(dist1, proj1);
+
                 return max(max(boxSD, max(min(dist1, proj1), min(dist2, proj2))), max(innerSphereSD, outerSphereSD));
-
-                // Probaj izracuniti cilindre tako da vzames naslednjo tocko theta stran (daljica _WallRadius) in 
-                // izracunaj polovico daljice ter malo naprej potegni od sredisca da pokrijes vse s cilindrom. Potem
-                // pa pac tiste ki imajo z manjse od min z cilindra.
-
-                //return max(max(boxSD, max(proj1, proj2)), max(innerSphereSD, outerSphereSD));
 			}
 
             float3 GetNormal(float3 p)

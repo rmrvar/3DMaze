@@ -85,7 +85,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _AnimProgress: 0.642
+    - _AnimProgress: 0.826
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -101,7 +101,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _MazeRadius: 5
+    - _MazeRadius: 7
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -128,7 +128,7 @@ Material:
     - _TopColor: {r: 0.5235849, g: 0.96137434, b: 1, a: 1}
     - _WallCenter: {r: 0, g: 0, b: 0, a: 1}
     - _WallExtent: {r: 1.5, g: 0.5, b: 1, a: 1}
-    - _WallExtents: {r: 1, g: 3, b: 5, a: 1}
+    - _WallExtents: {r: 0.5, g: 3, b: 2.8, a: 1}
     - _WallForward: {r: 0, g: 0, b: 1, a: 1}
     - _WallNormal: {r: 0, g: 1, b: 0, a: 1}
     - _WallRight: {r: 1, g: 0, b: 0, a: 1}
