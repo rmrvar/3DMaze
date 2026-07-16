@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -7,10 +8,13 @@ namespace Maze
 {
     public class Generator
     {
-        public Generator(Topology topology)
+        public Topology Topology { get; }
+
+        public Generator(Topology topology, Action<Wall> onCreateWall)
         {
             Debug.Assert(topology != null, "Topology is null!");
-            _topology = topology;
+            Topology = topology;
+            _onCreateWall = onCreateWall;
             for (int i = 0; i < topology.Triangles.Count; ++i)
             {
                 ProcessTriangle(
@@ -86,7 +90,8 @@ namespace Maze
             var key = new WallKey(i1, i2);
             if (!_edgeToWall.TryGetValue(key, out var wall))
             {
-                wall = new Wall(_topology, key);
+                wall = new Wall(Topology, key);
+                _onCreateWall?.Invoke(wall);
                 _edgeToWall.Add(key, wall);
             }
 
@@ -118,7 +123,8 @@ namespace Maze
             cell.Walls.Add(wall);
         }
 
-        private readonly Topology _topology;
+        private readonly Action<Wall> _onCreateWall;
+
         private readonly Dictionary<WallKey, Wall> _edgeToWall = new();
         private readonly Dictionary<CellKey, Cell> _faceToCell = new();
     }

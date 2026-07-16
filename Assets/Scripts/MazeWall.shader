@@ -2,13 +2,10 @@ Shader "Custom/MazeWall"
 {
     Properties
     {
+    	[Toggle] _PrevIsRaised ("Prev Is Raised", Float) = 0
+    	[Toggle] _CurrIsRaised ("Curr Is Raised", Float) = 0
     	_MazeCenter ("Maze Center", Vector) = (0, 0, 0)
     	_MazeRadius ("Maze Radius", Float) = 20
-    	_WallExtents ("Wall Extents", Vector) = (0.5, 0.5, 0.5)
-    	_WallCenter ("Wall Center", Vector) = (0, 0, 0)
-    	_WallRight ("Wall Right", Vector) = (1, 0, 0)
-    	_WallUp ("Wall Up", Vector) = (0, 1, 0)
-    	_WallForward ("Wall Forward", Vector) = (0, 0, 1)
         _WallHeight ("Wall Height", Float) = 2.0
     	_WallRadius ("Wall Radius", Float) = 0.5
     	_TopColor ("Top Color", Color) = (1, 1, 1, 1)
@@ -44,14 +41,12 @@ Shader "Custom/MazeWall"
             #define MAX_RAYMARCH_STEPS 160
             #define RAYMARCH_THRESHOLD 0.005
 
+            float _PrevIsRaised;
+            float _CurrIsRaised;
+
             CBUFFER_START(UnityPerMaterial)
 				float3 _MazeCenter;
 				float _MazeRadius;
-                float3 _WallCenter;
-				float3 _WallExtents;
-				float3 _WallRight;
-				float3 _WallUp;
-				float3 _WallForward;
                 float _WallHeight;
 				float _WallRadius;
                 float4 _TopColor;
@@ -69,77 +64,88 @@ Shader "Custom/MazeWall"
 
             float SDF(float3 position)
 			{
-                float height = _AnimProgress * _WallHeight;
+				const float3x3 worldRot = (float3x3)unity_ObjectToWorld;
 
-                float dx = dot(position - _WallCenter, _WallRight);
-                float dy = dot(position - _WallCenter, _WallUp);
-                float dz = dot(position - _WallCenter, _WallForward);
+				const float3 scale = float3(length(worldRot[0]), length(worldRot[1]), length(worldRot[2]));
+				const float3x3 worldBasis = float3x3(normalize(worldRot[0]), normalize(worldRot[1]), normalize(worldRot[2]));
+
+				const float3 wallU = worldBasis[0];
+				const float3 wallV = worldBasis[1];
+				const float3 wallW = worldBasis[2];
+				const float3 wallExtents = scale * 0.5;
+				const float3 wallCenter = unity_ObjectToWorld[3].xyz;
+
+                const float height = lerp(_PrevIsRaised, _CurrIsRaised, clamp(_AnimProgress, 0, 1)) * _WallHeight;
+
+                const float dx = dot(position - wallCenter, wallU);
+                const float dy = dot(position - wallCenter, wallV);
+                const float dz = dot(position - wallCenter, wallW);
 
                 // Spheres
-                float innerSphereSD = (_MazeRadius - height) - length(position - _MazeCenter);
-                float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
+                const float innerSphereSD = (_MazeRadius - height) - length(position - _MazeCenter);
+                const float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
 				
                 // Box with slant on X
-                float xExtentSD = abs(dx) - _WallRadius - _WallRadius * (outerSphereSD / _MazeRadius);
-                float yExtentSD = abs(dy) - _WallExtents.y;
-                float zExtentSD = abs(dz) - _WallExtents.z;
-                float boxSD = max(xExtentSD, max(yExtentSD, zExtentSD));
+                const float xExtentSD = abs(dx) - _WallRadius - _WallRadius * (outerSphereSD / _MazeRadius);
+                const float yExtentSD = abs(dy) - wallExtents.y;
+                const float zExtentSD = abs(dz) - wallExtents.z;
+                const float boxSD = max(xExtentSD, max(yExtentSD, zExtentSD));
 
                 // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z).
                 // Finds intersection of Y axis on z extents.
-            	float a = 1;
-                float b = -2 * _MazeRadius;
-                float c = _WallExtents.z * _WallExtents.z;
-                float discriminant = max(0, b * b - 4 * a * c);
-                float root1 = (-b + sqrt(discriminant)) / (2 * a);
-                float root2 = (-b - sqrt(discriminant)) / (2 * a);
-                float root = max(root1, root2);
-				float deltaY = root;
+            	const float a = 1;
+                const float b = -2 * _MazeRadius;
+                const float c = wallExtents.z * wallExtents.z;
+                const float discriminant = max(0, b * b - 4 * a * c);
+                const float root1 = (-b + sqrt(discriminant)) / (2 * a);
+                const float root2 = (-b - sqrt(discriminant)) / (2 * a);
+                const float root = max(root1, root2);
+				const float deltaY = root;
 
                 // Slants
-                float3 tangent1 = normalize(+_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
-                float3 tangent2 = normalize(-_WallExtents.z * _WallForward + (_MazeRadius - deltaY) * -_WallUp);
-                float3 normal1 = +normalize(cross(tangent1, _WallRight));
-                float3 normal2 = -normalize(cross(tangent2, _WallRight));
+                const float3 tangent1 = normalize(+wallExtents.z * wallW + (_MazeRadius - deltaY) * -wallV);
+                const float3 tangent2 = normalize(-wallExtents.z * wallW + (_MazeRadius - deltaY) * -wallV);
+                const float3 normal1 = +normalize(cross(tangent1, wallU));
+                const float3 normal2 = -normalize(cross(tangent2, wallU));
 
                 // Moves left/right from z extents by minimum angle to fit _WallRadius
-                float theta = 2 * asin(_WallRadius / _MazeRadius);
-                float3 coneForward1 = normal1 * sin(theta) + tangent1 * cos(theta);
-                float3 coneForward2 = normal2 * sin(theta) + tangent2 * cos(theta);
+                const float theta = 2 * asin(_WallRadius / _MazeRadius);
+                const float3 coneForward1 = normal1 * sin(theta) + tangent1 * cos(theta);
+                const float3 coneForward2 = normal2 * sin(theta) + tangent2 * cos(theta);
 
-            	float3 fromTo = position - _MazeCenter;
+            	const float3 fromTo = position - _MazeCenter;
 
                 // Half-Cone 1
-                float prllDelta1 = dot(fromTo, coneForward1);
-                float3 prllComponent1 = coneForward1 * prllDelta1;
-                float3 perpComponent1 = fromTo - prllComponent1;
+                const float prllDelta1 = dot(fromTo, coneForward1);
+                const float3 prllComponent1 = coneForward1 * prllDelta1;
+                const float3 perpComponent1 = fromTo - prllComponent1;
 
-                float perpRadius1 = abs(prllDelta1) / _MazeRadius * _WallRadius;
-                float3 newTangent1 = normalize(perpComponent1) * perpRadius1 + prllComponent1;
-                float3 newRight1 = cross(normalize(newTangent1), normalize(perpComponent1));
-                float3 newNormal1 = -normalize(cross(newTangent1, newRight1));
-                float dist1_1 = dot(fromTo, newNormal1);
-                float dist2_1 = prllDelta1;
-                float dist1 = max(dist1_1, dist2_1);
+                const float perpRadius1 = abs(prllDelta1) / _MazeRadius * _WallRadius;
+                const float3 newTangent1 = normalize(perpComponent1) * perpRadius1 + prllComponent1;
+                const float3 newRight1 = cross(normalize(newTangent1), normalize(perpComponent1));
+                const float3 newNormal1 = -normalize(cross(newTangent1, newRight1));
+                const float dist1_1 = dot(fromTo, newNormal1);
+                const float dist2_1 = prllDelta1;
+                const float dist1 = max(dist1_1, dist2_1);
 
                 // Half-Cone 2
-                float prllDelta2 = dot(fromTo, coneForward2);
-                float3 prllComponent2 = coneForward2 * prllDelta2;
-                float3 perpComponent2 = fromTo - prllComponent2;
+                const float prllDelta2 = dot(fromTo, coneForward2);
+                const float3 prllComponent2 = coneForward2 * prllDelta2;
+                const float3 perpComponent2 = fromTo - prllComponent2;
 
-                float perpRadius2 = abs(prllDelta2) / _MazeRadius * _WallRadius;
-                float3 newTangent2 = normalize(perpComponent2) * perpRadius2 + prllComponent2;
-                float3 newRight2 = cross(normalize(newTangent2), normalize(perpComponent2));
-                float3 newNormal2 = -normalize(cross(newTangent2, newRight2));
-                float dist1_2 = dot(fromTo, newNormal2);
-                float dist2_2 = prllDelta2;
-                float dist2 = max(dist1_2, dist2_2);
+                const float perpRadius2 = abs(prllDelta2) / _MazeRadius * _WallRadius;
+                const float3 newTangent2 = normalize(perpComponent2) * perpRadius2 + prllComponent2;
+                const float3 newRight2 = cross(normalize(newTangent2), normalize(perpComponent2));
+                const float3 newNormal2 = -normalize(cross(newTangent2, newRight2));
+                const float dist1_2 = dot(fromTo, newNormal2);
+                const float dist2_2 = prllDelta2;
+                const float dist2 = max(dist1_2, dist2_2);
 
                 // Actual slants (the other half of cones + everything else)
-                float3 anotherNormal1 = normalize(cross(coneForward1, _WallRight));
-                float3 anotherNormal2 = normalize(cross(coneForward2, _WallRight));
-                float proj1 = +dot(position - _MazeCenter, anotherNormal1);
-                float proj2 = -dot(position - _MazeCenter, anotherNormal2);
+                const float3 anotherNormal1 = normalize(cross(coneForward1, wallU));
+                const float3 anotherNormal2 = normalize(cross(coneForward2, wallU));
+                const float proj1 = +dot(position - _MazeCenter, anotherNormal1);
+                const float proj2 = -dot(position - _MazeCenter, anotherNormal2);
 
                 return max(max(boxSD, max(min(dist1, proj1), min(dist2, proj2))), max(innerSphereSD, outerSphereSD));
 			}
@@ -191,21 +197,21 @@ Shader "Custom/MazeWall"
 
             half4 frag (FRAG_IN i) : SV_Target
             {   
-                float3 lookOriginWS = _WorldSpaceCameraPos;
-                float3 lookDirectionWS = normalize(-GetWorldSpaceViewDir(i.positionWS));
-                Hit hit = RayMarch(lookOriginWS, lookDirectionWS);
+                const float3 lookOriginWS = _WorldSpaceCameraPos;
+                const float3 lookDirectionWS = normalize(-GetWorldSpaceViewDir(i.positionWS));
+                const Hit hit = RayMarch(lookOriginWS, lookDirectionWS);
             	clip(MAX_RAYMARCH_STEPS - hit.numSteps - 1);
 
-                float3 normal = hit.wsNormal;
-                Light mainLight = GetMainLight();
-                float3 lightColor = mainLight.color * saturate(dot(normal, mainLight.direction));
+                const float3 normal = hit.wsNormal;
+                const Light mainLight = GetMainLight();
+                const float3 lightColor = mainLight.color * saturate(dot(normal, mainLight.direction));
                 // Use a simpler ambient fetch
-                float3 ambient = half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w); 
+                const float3 ambient = half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w); 
 
-                bool isTowardsCenter = dot(normal, normalize(_MazeCenter - hit.wsPoint)) > 0.5;
-                float3 color = lerp(_SideColor, _TopColor, isTowardsCenter);
+                const bool isTowardsCenter = dot(normal, normalize(_MazeCenter - hit.wsPoint)) > 0.5;
+                const float3 color = lerp(_SideColor, _TopColor, isTowardsCenter);
 
-                float3 finalColor = color * (lightColor + ambient);
+                const float3 finalColor = color * (lightColor + ambient);
 
                 return half4(finalColor, _TopColor.a);
             }
