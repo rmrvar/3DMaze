@@ -295,11 +295,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7198f67f84b508f4fb7395c9c56c887c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  MazeRadius: 42
-  SubdivisionCount: 8
+  MazeRadius: 30
+  SubdivisionCount: 5
   HoleAngle: 20
   WallHeight: 4
-  WallRadius: 0.33333334
+  WallRadius: 0.4
   AnimSpeed: 1
   WallMaterial: {fileID: 2100000, guid: 089cd7fae4be16349be843f568b80787, type: 2}
   FloorMaterial: {fileID: 2100000, guid: 134a9c00f6e6d224c9fdf0d368157188, type: 2}

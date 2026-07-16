@@ -64,7 +64,7 @@ public class MazeWallMono : MonoBehaviour
             r,
             h * 1.25F, // Doesn't have to be perfect here, just add some buffer.
             // IMPORTANT: Shader shape depends on Z extents.
-            Mathf.Abs(Vector3.Dot(extremaFromTo, w))
+            Mathf.Abs(Vector3.Dot(extremaFromTo, w)) + r // Hack: The r was added because it works. 
         );
 
         _matPropertyBlock.SetVector("_WallU", Vector3.Cross(v, w));
