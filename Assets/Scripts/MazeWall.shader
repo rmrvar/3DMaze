@@ -8,6 +8,11 @@ Shader "Custom/MazeWall"
     	_MazeRadius ("Maze Radius", Float) = 20
         _WallHeight ("Wall Height", Float) = 2.0
     	_WallRadius ("Wall Radius", Float) = 0.5
+    	_WallU ("Wall U", Vector) = (1, 0, 0, 0)
+    	_WallV ("Wall V", Vector) = (0, 1, 0, 0)
+    	_WallW ("Wall W", Vector) = (0, 0, 1, 0)
+    	_WallExtents ("Wall Extents", Vector) = (0, 0, 1, 0)
+    	_WallCenter ("Wall Center", Vector) = (0, 0, 1, 0)
     	_TopColor ("Top Color", Color) = (1, 1, 1, 1)
         _SideColor ("Side Color", Color) = (1, 1, 1, 1)
         _AnimProgress ("Anim Progress", Range(0,1)) = 0.0
@@ -43,6 +48,11 @@ Shader "Custom/MazeWall"
 
             float _PrevIsRaised;
             float _CurrIsRaised;
+            float3 _WallU;
+            float3 _WallV;
+            float3 _WallW;
+            float3 _WallExtents;
+            float3 _WallCenter;
 
             CBUFFER_START(UnityPerMaterial)
 				float3 _MazeCenter;
@@ -56,24 +66,25 @@ Shader "Custom/MazeWall"
 
             FRAG_IN vert (VERT_IN i)
             {
+                float3 positionOS = i.positionOS.xyz;
                 FRAG_IN o;
-                o.positionCS = TransformObjectToHClip(i.positionOS);
-                o.positionWS = mul(unity_ObjectToWorld, i.positionOS.xyz).xyz;
+                o.positionCS = TransformObjectToHClip(positionOS);
+                o.positionWS = TransformObjectToWorld(positionOS);
                 return o;
             }
 
             float SDF(float3 position)
 			{
-				const float3x3 worldRot = (float3x3)unity_ObjectToWorld;
+				//const float3x3 worldRot = unity_ObjectToWorld;
 
-				const float3 scale = float3(length(worldRot[0]), length(worldRot[1]), length(worldRot[2]));
-				const float3x3 worldBasis = float3x3(normalize(worldRot[0]), normalize(worldRot[1]), normalize(worldRot[2]));
+				//const float3 scale = float3(length(worldRot[0]), length(worldRot[1]), length(worldRot[2]));
+				//const float3x3 worldBasis = float3x3(normalize(worldRot[0]), normalize(worldRot[1]), normalize(worldRot[2]));
 
-				const float3 wallU = worldBasis[0];
-				const float3 wallV = worldBasis[1];
-				const float3 wallW = worldBasis[2];
-				const float3 wallExtents = scale * 0.5;
-				const float3 wallCenter = unity_ObjectToWorld[3].xyz;
+				const float3 wallU = _WallU;//worldBasis[0];
+				const float3 wallV = _WallV;// worldBasis[1];
+				const float3 wallW = _WallW;//worldBasis[2];
+				const float3 wallExtents = _WallExtents;//scale * 0.5;
+				const float3 wallCenter = _WallCenter;//unity_ObjectToWorld[3].xyz;
 
                 const float height = lerp(_PrevIsRaised, _CurrIsRaised, clamp(_AnimProgress, 0, 1)) * _WallHeight;
 
@@ -82,17 +93,16 @@ Shader "Custom/MazeWall"
                 const float dz = dot(position - wallCenter, wallW);
 
                 // Spheres
-                const float innerSphereSD = (_MazeRadius - height) - length(position - _MazeCenter);
+                const float innerSphereSD = -(length(position - _MazeCenter) - (_MazeRadius - height));
                 const float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
-				
-                // Box with slant on X
+
+            	// Box with slant on X
                 const float xExtentSD = abs(dx) - _WallRadius - _WallRadius * (outerSphereSD / _MazeRadius);
                 const float yExtentSD = abs(dy) - wallExtents.y;
                 const float zExtentSD = abs(dz) - wallExtents.z;
                 const float boxSD = max(xExtentSD, max(yExtentSD, zExtentSD));
 
-                // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z).
-                // Finds intersection of Y axis on z extents.
+                // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z). Finds intersection of Y axis on z extents.
             	const float a = 1;
                 const float b = -2 * _MazeRadius;
                 const float c = wallExtents.z * wallExtents.z;
@@ -147,6 +157,7 @@ Shader "Custom/MazeWall"
                 const float proj1 = +dot(position - _MazeCenter, anotherNormal1);
                 const float proj2 = -dot(position - _MazeCenter, anotherNormal2);
 
+                //return max(boxSD, max(innerSphereSD, outerSphereSD));
                 return max(max(boxSD, max(min(dist1, proj1), min(dist2, proj2))), max(innerSphereSD, outerSphereSD));
 			}
 
@@ -198,7 +209,7 @@ Shader "Custom/MazeWall"
             half4 frag (FRAG_IN i) : SV_Target
             {   
                 const float3 lookOriginWS = _WorldSpaceCameraPos;
-                const float3 lookDirectionWS = normalize(-GetWorldSpaceViewDir(i.positionWS));
+                const float3 lookDirectionWS = normalize(i.positionWS - lookOriginWS);
                 const Hit hit = RayMarch(lookOriginWS, lookDirectionWS);
             	clip(MAX_RAYMARCH_STEPS - hit.numSteps - 1);
 

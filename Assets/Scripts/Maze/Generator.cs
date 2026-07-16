@@ -15,7 +15,7 @@ namespace Maze
             Debug.Assert(topology != null, "Topology is null!");
             Topology = topology;
             _onCreateWall = onCreateWall;
-            for (int i = 0; i < topology.Triangles.Count; ++i)
+            for (int i = 0; i < topology.Triangles.Count - 2; i += 3)
             {
                 ProcessTriangle(
                     topology.Triangles[i],

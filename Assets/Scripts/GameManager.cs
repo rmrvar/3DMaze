@@ -57,6 +57,7 @@ public class GameManager : MonoBehaviour
 
     private void OnCreateWall(Wall wall)
     {
+        Debug.Log("Creating wall");
         var wallMono = Instantiate(_wallPrefab);
         wallMono.Init(wall);
         _wallMonos.Add(wallMono);
@@ -66,6 +67,11 @@ public class GameManager : MonoBehaviour
     {
         _animProgress += Time.deltaTime * AnimSpeed;
         WallMaterial.SetFloat(AnimProgressNameId, _animProgress);
+
+        foreach (var wallMono in _wallMonos)
+        {
+            wallMono.SetAnimProgress(_animProgress);
+        }
     }
 
     private readonly List<MazeWallMono> _wallMonos = new();

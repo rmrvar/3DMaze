@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 namespace Maze
 {
@@ -16,8 +15,8 @@ namespace Maze
             SubdivisionCount = subdivisionCount;
             HoleAngle = holeAngle;
 
-            Vertices = new List<Vector3>();
-            Triangles = new List<int>();
+            Vertices = new List<Vector3>(12);
+            Triangles = new List<int>(60);
 
             Create();
             Divide();
@@ -133,8 +132,8 @@ namespace Maze
         {
             var midpoint = (p1 + p2 + p3) / 3.0F;
             var dot = Vector3.Dot(midpoint.normalized, Vector3.up);
-            var theta = Mathf.Acos(dot);
-            if (theta < HoleAngle || theta > Mathf.PI - HoleAngle)
+            var theta = Mathf.Acos(dot) * Mathf.Rad2Deg;
+            if (theta < HoleAngle || theta > 180 - HoleAngle)
             {
                 return;
             }
@@ -144,7 +143,7 @@ namespace Maze
             AddTriangle(i1, i2, i3);
         }
 
-        private readonly List<Vector3> _initialVertices = new List<Vector3>(12);
-        private readonly List<int> _initialIndices = new List<int>(60);
+        private readonly List<Vector3> _initialVertices = new(12);
+        private readonly List<int> _initialIndices = new(60);
     }
 }

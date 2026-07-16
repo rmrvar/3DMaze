@@ -8,7 +8,11 @@ public class MazeWallMono : MonoBehaviour
     private Collider _collider;
     [SerializeField]
     private Renderer _renderer;
-    
+    [SerializeField]
+    private Transform _position1DebugTransform;
+    [SerializeField]
+    private Transform _position2DebugTransform;
+
     private void Awake()
     {
         if (_collider == null && _scaleRoot != null)
@@ -63,8 +67,17 @@ public class MazeWallMono : MonoBehaviour
             Mathf.Abs(Vector3.Dot(extremaFromTo, w))
         );
 
+        _matPropertyBlock.SetVector("_WallU", Vector3.Cross(v, w));
+        _matPropertyBlock.SetVector("_WallV", v);
+        _matPropertyBlock.SetVector("_WallW", w);
+        _matPropertyBlock.SetVector("_WallCenter", position);
+        _matPropertyBlock.SetVector("_WallExtents", extents);
+
         transform.SetPositionAndRotation(position, rotation);
         _scaleRoot.transform.localScale = extents * 2;
+
+        _position1DebugTransform.position = _wall.Position1;
+        _position2DebugTransform.position = _wall.Position2;
     }
 
     public void SetAnimProgress(float animProgress)
@@ -96,14 +109,8 @@ public class MazeWallMono : MonoBehaviour
 
     private void SetRaisedness(bool isRaised)
     {
-        if (isRaised)
-        {
-            _collider.enabled = true;
-        }
-        if (isRaised || _prevIsRaised)
-        {
-            _renderer.enabled = true;
-        }
+        _collider.enabled = isRaised;
+        _renderer.enabled = isRaised || _prevIsRaised;
         _matPropertyBlock.SetFloat(PrevIsRaised, _prevIsRaised ? 1 : 0);
         _matPropertyBlock.SetFloat(CurrIsRaised, isRaised ? 1 : 0);
         _renderer.SetPropertyBlock(_matPropertyBlock);
