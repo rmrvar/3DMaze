@@ -23,18 +23,20 @@ Shader "Custom/MazeWall"
 
         Pass
         {
-            HLSLPROGRAM
+        	ZWrite On
+			ZTest LEqual
+            
+			HLSLPROGRAM
 
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct VERT_IN
             {
                 float4 positionOS : POSITION;
-                float3 normalOS   : NORMAL; 
-                float2 stateData  : TEXCOORD0;  // x: Prev (0 or 1), y: Curr (0 or 1)
             };
 
             struct FRAG_IN
@@ -43,8 +45,8 @@ Shader "Custom/MazeWall"
                 float3 positionWS : TEXCOORD0;
             };
 
-            #define MAX_RAYMARCH_STEPS 160
-            #define RAYMARCH_THRESHOLD 0.005
+            #define MAX_RAYMARCH_STEPS 100
+            #define RAYMARCH_THRESHOLD 0.01
 
             float _PrevIsRaised;
             float _CurrIsRaised;
@@ -163,6 +165,11 @@ Shader "Custom/MazeWall"
 
             float3 GetNormal(float3 p)
 			{
+                const float height = lerp(_PrevIsRaised, _CurrIsRaised, clamp(_AnimProgress, 0, 1)) * _WallHeight;
+                if (length(p) < _MazeRadius - height + 0.01)
+                {
+	                return -normalize(p);
+                }
 			    const float2 e = float2(0.001, 0.0);
 			    return normalize(float3(
 			        SDF(p + e.xyy) - SDF(p - e.xyy),
@@ -206,12 +213,19 @@ Shader "Custom/MazeWall"
                 return hit;
 			}
 
-            half4 frag (FRAG_IN i) : SV_Target
+            half4 frag (FRAG_IN i, out float outDepth : SV_Depth) : SV_Target
             {   
                 const float3 lookOriginWS = _WorldSpaceCameraPos;
                 const float3 lookDirectionWS = normalize(i.positionWS - lookOriginWS);
                 const Hit hit = RayMarch(lookOriginWS, lookDirectionWS);
             	clip(MAX_RAYMARCH_STEPS - hit.numSteps - 1);
+
+                float3 ndc = ComputeNormalizedDeviceCoordinatesWithZ(hit.wsPoint, UNITY_MATRIX_VP);
+                float2 screenUV = ndc.xy;
+				float sceneDepth = SampleSceneDepth(screenUV);
+                //clip(sceneDepth - ndc.z);
+
+                outDepth = ndc.z;
 
                 const float3 normal = hit.wsNormal;
                 const Light mainLight = GetMainLight();
@@ -219,7 +233,7 @@ Shader "Custom/MazeWall"
                 // Use a simpler ambient fetch
                 const float3 ambient = half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w); 
 
-                const bool isTowardsCenter = dot(normal, normalize(_MazeCenter - hit.wsPoint)) > 0.5;
+                const bool isTowardsCenter = dot(normal, normalize(_MazeCenter - hit.wsPoint)) > 0.99;
                 const float3 color = lerp(_SideColor, _TopColor, isTowardsCenter);
 
                 const float3 finalColor = color * (lightColor + ambient);
