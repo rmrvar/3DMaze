@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Maze;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,31 +13,42 @@ public class GameManager : MonoBehaviour
 
     [Header("Maze Settings")]
     [field: SerializeField]
-    public float MazeRadius;
+    public float MazeRadius { get; private set; }
     [field: SerializeField]
-    public int SubdivisionCount;
+    public int SubdivisionCount { get; private set; }
     [field: SerializeField]
-    public float HoleAngle;
+    public float HoleAngle { get; private set; }
     [field: SerializeField]
-    public float WallHeight;
+    public float WallHeight { get; private set; }
     [field: SerializeField]
-    public float WallRadius;
+    public float WallRadius { get; private set; }
     [field: SerializeField]
-    public float AnimSpeed;
+    public float AnimSpeed { get; private set; }
 
     [field: SerializeField]
-    public Material WallMaterial;
+    public Material WallMaterial { get; private set; }
     [field: SerializeField]
-    public Material FloorMaterial;
+    public Material FloorMaterial { get; private set; }
 
     [field: SerializeField]
-    public MazeWallMono _wallPrefab;
+    public Color WallTopColor { get; private set; }
+    [field: SerializeField]
+    public Color WallSideColor { get; private set; }
+    [field: SerializeField]
+    public Color FloorColor { get; private set; }
+
+    [field: SerializeField]
+    public MazeWallMono WallPrefab { get; private set; }
+    [field: SerializeField]
+    public MazeFloorMono FloorPrefab { get; private set; }
 
     public static GameManager Instance { get; private set; }
 
     private void Awake()
     {
         Instance = this;
+
+        Instantiate(FloorPrefab);
 
         _mazeTopology = new Icosahedron(MazeRadius, SubdivisionCount, HoleAngle);
         _mazeGenerator = new Generator(_mazeTopology, OnCreateWall);
@@ -47,18 +59,14 @@ public class GameManager : MonoBehaviour
         WallMaterial.SetFloat(MazeRadiusNameId, MazeRadius);
         WallMaterial.SetFloat(WallHeightNameId, WallHeight);
         WallMaterial.SetFloat(WallRadiusNameId, WallRadius);
-
-
-        FloorMaterial.SetVector(MazeCenterNameId, Vector3.zero);
-        FloorMaterial.SetFloat(MazeRadiusNameId, MazeRadius);
-
-        // TODO: Put the code from the old sphere inverter here.
+        WallMaterial.SetVector("_TopColor", WallTopColor);
+        WallMaterial.SetVector("_SideColor", WallSideColor);
     }
 
     private void OnCreateWall(Wall wall)
     {
         Debug.Log("Creating wall");
-        var wallMono = Instantiate(_wallPrefab);
+        var wallMono = Instantiate(WallPrefab);
         wallMono.Init(wall);
         _wallMonos.Add(wallMono);
     }

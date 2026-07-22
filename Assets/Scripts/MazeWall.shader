@@ -16,15 +16,26 @@ Shader "Custom/MazeWall"
     	_TopColor ("Top Color", Color) = (1, 1, 1, 1)
         _SideColor ("Side Color", Color) = (1, 1, 1, 1)
         _AnimProgress ("Anim Progress", Range(0,1)) = 0.0
+    	_StencilOutputValue ("Stencil Output Value", Int) = 1
     }
     SubShader
     {
-        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType" = "TransparentCutout" "Queue" = "AlphaTest" }
 
+        Stencil
+        {
+            Ref [_StencilOutputValue]  
+            Comp Always 
+            Pass Replace
+        }
+        
         Pass
         {
+        	//Name "ForwardLit"
+			//Tags { "LightMode" = "UniversalForward" }
+        
         	ZWrite On
-			ZTest LEqual
+			ZTest Less
             
 			HLSLPROGRAM
 
@@ -43,6 +54,12 @@ Shader "Custom/MazeWall"
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
+            };
+
+			struct FRAG_OUT
+            {
+                float4 color : SV_Target;
+                //float depth  : SV_Depth;
             };
 
             #define MAX_RAYMARCH_STEPS 100
@@ -66,7 +83,7 @@ Shader "Custom/MazeWall"
                 float _AnimProgress;
             CBUFFER_END
 
-            FRAG_IN vert (VERT_IN i)
+            FRAG_IN vert(VERT_IN i)
             {
                 float3 positionOS = i.positionOS.xyz;
                 FRAG_IN o;
@@ -77,18 +94,13 @@ Shader "Custom/MazeWall"
 
             float SDF(float3 position)
 			{
-				//const float3x3 worldRot = unity_ObjectToWorld;
+				const float3 wallU = _WallU;
+				const float3 wallV = _WallV;
+				const float3 wallW = _WallW;
+				const float3 wallExtents = _WallExtents;
+				const float3 wallCenter = _WallCenter;
 
-				//const float3 scale = float3(length(worldRot[0]), length(worldRot[1]), length(worldRot[2]));
-				//const float3x3 worldBasis = float3x3(normalize(worldRot[0]), normalize(worldRot[1]), normalize(worldRot[2]));
-
-				const float3 wallU = _WallU;//worldBasis[0];
-				const float3 wallV = _WallV;// worldBasis[1];
-				const float3 wallW = _WallW;//worldBasis[2];
-				const float3 wallExtents = _WallExtents;//scale * 0.5;
-				const float3 wallCenter = _WallCenter;//unity_ObjectToWorld[3].xyz;
-
-                const float height = lerp(_PrevIsRaised, _CurrIsRaised, clamp(_AnimProgress, 0, 1)) * _WallHeight;
+                const float height = lerp(_PrevIsRaised, _CurrIsRaised, saturate(_AnimProgress)) * _WallHeight;
 
                 const float dx = dot(position - wallCenter, wallU);
                 const float dy = dot(position - wallCenter, wallV);
@@ -165,11 +177,15 @@ Shader "Custom/MazeWall"
 
             float3 GetNormal(float3 p)
 			{
-                const float height = lerp(_PrevIsRaised, _CurrIsRaised, clamp(_AnimProgress, 0, 1)) * _WallHeight;
+                const float height = lerp(_PrevIsRaised, _CurrIsRaised, saturate(_AnimProgress)) * _WallHeight;
                 if (length(p) < _MazeRadius - height + 0.01)
                 {
 	                return -normalize(p);
                 }
+                // if zTheta between [-segmentZTheta, +segmentZTheta] => only two normals i believe, take the one closer to xDelta
+                // if zTheta is more we don't care how much more since not sdf will ensure we don't poll others
+                //     => same tilt based on angularly getting thinner similar triangles but for xz normalized
+
 			    const float2 e = float2(0.001, 0.0);
 			    return normalize(float3(
 			        SDF(p + e.xyy) - SDF(p - e.xyy),
@@ -213,7 +229,7 @@ Shader "Custom/MazeWall"
                 return hit;
 			}
 
-            half4 frag (FRAG_IN i, out float outDepth : SV_Depth) : SV_Target
+            FRAG_OUT frag(FRAG_IN i, out float depth : SV_Depth) : SV_Target
             {   
                 const float3 lookOriginWS = _WorldSpaceCameraPos;
                 const float3 lookDirectionWS = normalize(i.positionWS - lookOriginWS);
@@ -223,9 +239,7 @@ Shader "Custom/MazeWall"
                 float3 ndc = ComputeNormalizedDeviceCoordinatesWithZ(hit.wsPoint, UNITY_MATRIX_VP);
                 float2 screenUV = ndc.xy;
 				float sceneDepth = SampleSceneDepth(screenUV);
-                //clip(sceneDepth - ndc.z);
-
-                outDepth = ndc.z;
+                depth = ndc.z;
 
                 const float3 normal = hit.wsNormal;
                 const Light mainLight = GetMainLight();
@@ -238,7 +252,10 @@ Shader "Custom/MazeWall"
 
                 const float3 finalColor = color * (lightColor + ambient);
 
-                return half4(finalColor, _TopColor.a);
+                FRAG_OUT output;
+                output.color = float4(finalColor, 1);
+                //output.depth = ndc.z;// sceneDepth;//ndc.z;//sceneDepth;//ndc.z;
+                return output;
             }
             
             ENDHLSL

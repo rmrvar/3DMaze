@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3612808303316500759}
+  - component: {fileID: 515865610233483262}
   - component: {fileID: 303332389362145998}
   - component: {fileID: 6698630573055617075}
   - component: {fileID: 4983240333575815087}
@@ -36,6 +37,19 @@ Transform:
   - {fileID: 6729750120860089910}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &515865610233483262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032522599313327438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3af0f9d2f33af14db8d13293f63e748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MazeFloorMono
+  _mazeFloorRenderer: {fileID: 4983240333575815087}
 --- !u!114 &303332389362145998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -83,7 +97,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 134a9c00f6e6d224c9fdf0d368157188, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -237,7 +251,7 @@ SphereCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
