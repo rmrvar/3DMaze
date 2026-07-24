@@ -98,11 +98,6 @@ namespace Maze
             {
                 _topWalls[i].SetRaisedness(i != topIndex);
             }
-
-            foreach (Wall wall in _edgeToWall.Values)
-            {
-                wall.SetRaisedness(wall.IsRaised); // It needs to be raised.
-            }
         }
 
         private void ProcessTriangle(int i1, int i2, int i3)

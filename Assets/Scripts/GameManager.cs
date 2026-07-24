@@ -47,6 +47,11 @@ public class GameManager : MonoBehaviour
     public void RegenerateMaze()
     {
         _animProgress = 0;
+        WallMaterial.SetFloat(AnimProgressNameId, _animProgress);
+        foreach (var wallMono in _wallMonos)
+        {
+            wallMono.SetAnimProgress(_animProgress);
+        }
         _mazeGenerator.DoKruskal();
     }
 
