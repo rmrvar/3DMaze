@@ -23,6 +23,22 @@ namespace Maze
                     topology.Triangles[i + 2]
                   );
             }
+            foreach (Wall wall in _edgeToWall.Values)
+            {
+                if (wall.Cell1 != null && wall.Cell2 != null)
+                {
+                    continue;
+                }
+
+                if (wall.Position1.y < 0)
+                {
+                    _botWalls.Add(wall);
+                }
+                else
+                {
+                    _topWalls.Add(wall);
+                }
+            }
         }
 
         public void DoKruskal()
@@ -48,8 +64,7 @@ namespace Maze
                 var cell2 = wall.Cell2;
                 if (cell2 == null)
                 {
-                    wall.SetRaisedness(true);
-                    continue; // Can't divide.    
+                    continue; // Handle these after (_botWalls and _topWalls).
                 }
 
                 int idA = faceToBranch[cell1.Key];
@@ -71,6 +86,17 @@ namespace Maze
                 {
                     wall.SetRaisedness(true);
                 }
+            }
+
+            int botIndex = Random.Range(0, _botWalls.Count);
+            int topIndex = Random.Range(0, _topWalls.Count);
+            for (int i = 0; i < _botWalls.Count; ++i)
+            {
+                _botWalls[i].SetRaisedness(i != botIndex);
+            }
+            for (int i = 0; i < _topWalls.Count; ++i)
+            {
+                _topWalls[i].SetRaisedness(i != topIndex);
             }
         }
 
@@ -127,5 +153,8 @@ namespace Maze
 
         private readonly Dictionary<WallKey, Wall> _edgeToWall = new();
         private readonly Dictionary<CellKey, Cell> _faceToCell = new();
+
+        private readonly List<Wall> _botWalls = new();
+        private readonly List<Wall> _topWalls = new();
     }
 }
