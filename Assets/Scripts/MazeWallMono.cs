@@ -62,18 +62,22 @@ public class MazeWallMono : MonoBehaviour
         Vector3 extremaFromTo = extrema - position;
         Vector3 extents = new(
             r,
-            h * 1.25F, // Doesn't have to be perfect here, just add some buffer.
+            (h + 1.0F) * 0.5F, // Doesn't have to be perfect here, just add some buffer.
             // IMPORTANT: Shader shape depends on Z extents.
             Mathf.Abs(Vector3.Dot(extremaFromTo, w)) + r // Hack: The r was added because it works. 
         );
 
+        // Must match extents.
+        var wallCenter = position + v * (extents.y - 0.5F);
+
         _matPropertyBlock.SetVector("_WallU", Vector3.Cross(v, w));
         _matPropertyBlock.SetVector("_WallV", v);
         _matPropertyBlock.SetVector("_WallW", w);
-        _matPropertyBlock.SetVector("_WallCenter", position);
+        _matPropertyBlock.SetVector("_WallCenter", wallCenter);
         _matPropertyBlock.SetVector("_WallExtents", extents);
 
-        transform.SetPositionAndRotation(position, rotation);
+
+        transform.SetPositionAndRotation(wallCenter, rotation);
         _scaleRoot.transform.localScale = extents * 2;
 
         _position1DebugTransform.position = _wall.Position1;
