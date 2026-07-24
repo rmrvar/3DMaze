@@ -386,7 +386,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   <MazeRadius>k__BackingField: 23
-  <SubdivisionCount>k__BackingField: 5
+  <SubdivisionCount>k__BackingField: 2
   <HoleAngle>k__BackingField: 20
   <WallHeight>k__BackingField: 4
   <WallRadius>k__BackingField: 0.375
@@ -772,7 +772,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 26
+      value: 23
       objectReference: {fileID: 0}
     - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: m_LocalPosition.z
@@ -964,7 +964,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -26
+      value: -23
       objectReference: {fileID: 0}
     - target: {fileID: 7831202562452823334, guid: 9d7de7cf85e00e34dace965ae88da966, type: 3}
       propertyPath: m_LocalPosition.z

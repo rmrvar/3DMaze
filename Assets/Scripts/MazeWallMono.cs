@@ -82,7 +82,7 @@ public class MazeWallMono : MonoBehaviour
 
     public void SetAnimProgress(float animProgress)
     {
-        if (_isLowering)
+        if (!_isLowering)
         {
             return;
         }
@@ -96,8 +96,10 @@ public class MazeWallMono : MonoBehaviour
         _isLowering = false;
     }
 
+
     private void OnRaise()
     {
+        _isLowering = false;
         SetRaisedness(true);
     }
 

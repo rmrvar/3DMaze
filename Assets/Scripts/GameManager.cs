@@ -44,6 +44,12 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
+    public void RegenerateMaze()
+    {
+        _animProgress = 0;
+        _mazeGenerator.DoKruskal();
+    }
+
     private void Awake()
     {
         Instance = this;

@@ -13,9 +13,6 @@ public class ButtonScript : MonoBehaviour
     private ButtonScript _otherButton;
     
     [SerializeField]
-    private Maze.Generator _mazeGenerator;
-
-    [SerializeField]
     private float _sinkSpeed;
     [SerializeField]
     private bool _isHidden;
@@ -74,7 +71,7 @@ public class ButtonScript : MonoBehaviour
         StartCoroutine(IE_LowerThis());
         yield return StartCoroutine(IE_RaiseThat());
         
-        _mazeGenerator.DoKruskal();
+        GameManager.Instance.RegenerateMaze();
     }
 
     private IEnumerator IE_LowerThis()
