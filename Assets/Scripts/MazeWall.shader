@@ -64,8 +64,8 @@ Shader "Custom/MazeWall"
 
             //#define MAX_RAYMARCH_STEPS 100
             //#define RAYMARCH_THRESHOLD 0.01
-            #define MAX_RAYMARCH_STEPS 500
-            #define RAYMARCH_THRESHOLD 0.0001
+            #define MAX_RAYMARCH_STEPS 100
+            #define RAYMARCH_THRESHOLD 0.01
 
             float _PrevIsRaised;
             float _CurrIsRaised;
@@ -130,7 +130,7 @@ Shader "Custom/MazeWall"
                 const float3 normal1 = +normalize(cross(tangent1, wallU));
                 const float3 normal2 = -normalize(cross(tangent2, wallU));
 
-                // Moves left/right from z extents by minimum angle to fit _WallRadius
+                // Moves left/right away from z extents by minimum angle to fit _WallRadius
                 const float theta = asin(_WallRadius / _MazeRadius);
                 const float3 coneForward1 = normal1 * sin(theta) + tangent1 * cos(theta);
                 const float3 coneForward2 = normal2 * sin(theta) + tangent2 * cos(theta);
@@ -173,13 +173,73 @@ Shader "Custom/MazeWall"
                 const float height = lerp(_PrevIsRaised, _CurrIsRaised, saturate(_AnimProgress)) * _WallHeight;
                 if (length(p) < _MazeRadius - height + 0.01)
                 {
+                    // Top
 	                return -normalize(p);
                 }
+
+                // COPIED FROM SDF
+                // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z). Finds intersection of Y axis on z extents.
+            	const float a = 1;
+                const float b = -2 * _MazeRadius;
+                const float c = _WallExtents.z * _WallExtents.z;
+                const float discriminant = max(0, b * b - 4 * a * c);
+                const float root1 = (-b + sqrt(discriminant)) / (2 * a);
+                const float root2 = (-b - sqrt(discriminant)) / (2 * a);
+                const float root = max(root1, root2);
+				const float deltaY = root;
+                
+                // The tangents and normals of the two planes intersecting the cylinders.
+                const float3 zCrossTangent = normalize(+_WallExtents.z * _WallW + (_MazeRadius - deltaY) * -_WallV);
+                const float3 zCrossNormal = +normalize(cross(zCrossTangent, _WallU));
+                
+                // Moves left/right away from z extents by minimum angle to fit _WallRadius
+                const float theta = asin(_WallRadius / _MazeRadius);
+                const float3 coneForward = zCrossNormal * sin(theta) + zCrossTangent * cos(theta);
+                
+                const float y = abs(dot(coneForward, _WallV));
+                const float z = abs(dot(coneForward, _WallW));
+                const float theta2 = abs(atan2(z, y));
+
+            	const float3 fromTo = p - _MazeCenter;
+
+                const float dy = abs(dot(fromTo, _WallV));
+                const float dz = abs(dot(fromTo, _WallW));
+                const float theta3 = abs(atan2(dz, dy));
+
+                const float buffer = 0;//0.005; // Fights artefacts at borders (radians).
+                if (theta3 <= theta2 + buffer)
+                {
+                    // Sides
+                    const float dx = dot(fromTo, _WallU);
+                    const float3 tangent =  -normalize(+(sign(dx) * _WallRadius) * _WallU + _WallCenter);
+                    const float3 normal = cross(tangent, _WallW);
+                
+                    return normal * sign(dot(fromTo, normal));
+                }
+
+                //const float prllDelta = dot(fromTo, coneForward);
+                //const float3 prllComponent = coneForward * prllDelta;
+                //const float3 perpComponent = fromTo - prllComponent;
+                
+
+                // TODO: Need both cone forwards and need sign theta
+                const float right = normalize(cross(fromTo, coneForward));
+                const float normal = normalize(cross(right, coneForward));
+
+                return normal;// * sign(dot(fromTo, normal));
+                
+
+                //const float perpRadius = abs(prllDelta) / _MazeRadius * _WallRadius;
+                //const float3 newTangent = normalize(normalize(perpComponent) * perpRadius + prllComponent); // The tangents and normals of plane through closest point on cylinder.
+                //const float3 newRight = cross(newTangent, normalize(perpComponent));
+                //const float3 newNormal = cross(newTangent, newRight);
+                //
+                //return newNormal * sign(dot(fromTo, newNormal));
                 // if zTheta between [-segmentZTheta, +segmentZTheta] => only two normals i believe, take the one closer to xDelta
                 // if zTheta is more we don't care how much more since not sdf will ensure we don't poll others
                 //     => same tilt based on angularly getting thinner similar triangles but for xz normalized
-
-			    const float2 e = float2(0.0001, 0.0);
+                
+			    const float2 e = float2(0.01, 0.0);
 			    return normalize(float3(
 			        SDF(p + e.xyy) - SDF(p - e.xyy),
 			        SDF(p + e.yxy) - SDF(p - e.yxy),
