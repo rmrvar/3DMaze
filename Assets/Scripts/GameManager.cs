@@ -39,8 +39,6 @@ public class GameManager : MonoBehaviour
 
     [field: SerializeField]
     public MazeWallMono WallPrefab { get; private set; }
-    [field: SerializeField]
-    public MazeFloorMono FloorPrefab { get; private set; }
 
     public static GameManager Instance { get; private set; }
 
@@ -58,8 +56,6 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-
-        Instantiate(FloorPrefab);
 
         _mazeTopology = new Icosahedron(MazeRadius, SubdivisionCount, HoleAngle);
         _mazeGenerator = new Generator(_mazeTopology, OnCreateWall);
