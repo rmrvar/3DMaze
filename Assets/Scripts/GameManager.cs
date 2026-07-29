@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using Maze;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class GameManager : MonoBehaviour
 {
@@ -9,7 +9,6 @@ public class GameManager : MonoBehaviour
     private static readonly int MazeRadiusNameId = Shader.PropertyToID("_MazeRadius");
     private static readonly int WallHeightNameId = Shader.PropertyToID("_WallHeight");
     private static readonly int WallRadiusNameId = Shader.PropertyToID("_WallRadius");
-    private static readonly int AnimProgressNameId = Shader.PropertyToID("_AnimProgress");
 
     [Header("Maze Settings")]
     [field: SerializeField]
@@ -24,6 +23,8 @@ public class GameManager : MonoBehaviour
     public float WallRadius { get; private set; }
     [field: SerializeField]
     public float AnimSpeed { get; private set; }
+    [field: SerializeField] 
+    public float FullAnimDuration { get; private set; } = 2;
 
     [field: SerializeField]
     public Material WallMaterial { get; private set; }
@@ -45,12 +46,12 @@ public class GameManager : MonoBehaviour
     public void RegenerateMaze()
     {
         _animProgress = 0;
-        WallMaterial.SetFloat(AnimProgressNameId, _animProgress);
-        foreach (var wallMono in _wallMonos)
+        foreach (var wall in _wallMonos)
         {
-            wallMono.SetAnimProgress(_animProgress);
+            wall.ResetAnimProgress();
         }
         _mazeGenerator.DoKruskal();
+        _isBottomPole = !_isBottomPole;
     }
 
     private void Awake()
@@ -80,12 +81,21 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        _animProgress += Time.deltaTime * AnimSpeed;
-        WallMaterial.SetFloat(AnimProgressNameId, _animProgress);
+        _animProgress += Time.deltaTime / FullAnimDuration;
 
         foreach (var wallMono in _wallMonos)
         {
-            wallMono.SetAnimProgress(_animProgress);
+            float minY = Mathf.Lerp(-MazeRadius, +MazeRadius, _animProgress);
+            if (   
+                // Start bottom up
+                   ( _isBottomPole && wallMono.transform.position.y > +minY) 
+                // Start top down
+                || (!_isBottomPole && wallMono.transform.position.y < -minY)
+              )
+            {
+                continue; // This wall is not ready to be updated yet.
+            }
+            wallMono.UpdateAnimProgress(Time.deltaTime);
         }
     }
 
@@ -93,4 +103,5 @@ public class GameManager : MonoBehaviour
     private Topology _mazeTopology;
     private Generator _mazeGenerator;
     private float _animProgress = 1; // Maze starts with walls up/down.
+    private bool _isBottomPole = true;
 }

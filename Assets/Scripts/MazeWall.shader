@@ -74,7 +74,6 @@ Shader "Custom/MazeWall"
             float3 _WallW;
             float3 _WallExtents;
             float3 _WallCenter;
-            float _AnimProgress;
 
             CBUFFER_START(UnityPerMaterial)
 				float3 _MazeCenter;
@@ -83,6 +82,7 @@ Shader "Custom/MazeWall"
 				float _WallRadius;
                 float4 _TopColor;
 				float4 _SideColor;
+				float _AnimProgress;
             CBUFFER_END
 
             FRAG_IN vert(VERT_IN i)

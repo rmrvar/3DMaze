@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MazeWallMono : MonoBehaviour
@@ -27,6 +28,8 @@ public class MazeWallMono : MonoBehaviour
 
     public void Init(Maze.Wall wall)
     {
+        _animProgress = 1; // Maze starts with finished animation.
+
         _wall = wall;
         _wall.OnRaise += OnRaise;
         _wall.OnLower += OnLower;
@@ -84,47 +87,86 @@ public class MazeWallMono : MonoBehaviour
         _position2DebugTransform.position = _wall.Position2;
     }
 
-    public void SetAnimProgress(float animProgress)
+    public void ResetAnimProgress()
     {
-        if (!_isLowering)
-        {
-            return;
-        }
-
-        if (animProgress < 1)
-        {
-            return;
-        }
-
-        _renderer.enabled = false;
-        _isLowering = false;
+        _animProgress = 0;
+        _matPropertyBlock.SetFloat("_AnimProgress", _animProgress);
+        _renderer.SetPropertyBlock(_matPropertyBlock);
     }
 
+    public void UpdateAnimProgress(float deltaTime)
+    {
+        _animProgress += deltaTime * GameManager.Instance.AnimSpeed;
+        _matPropertyBlock.SetFloat("_AnimProgress", _animProgress);
+        _renderer.SetPropertyBlock(_matPropertyBlock);
+
+        UpdateRendererEnabledness();
+    }
 
     private void OnRaise()
     {
-        _isLowering = false;
         SetRaisedness(true);
     }
 
     private void OnLower()
     {
-        _isLowering = true;
         SetRaisedness(false);
     }
 
     private void SetRaisedness(bool isRaised)
     {
-        _collider.enabled = isRaised;
-        _renderer.enabled = isRaised || _prevIsRaised;
+        _prevIsRaised = _currIsRaised;
+        _currIsRaised = isRaised;
+
+        _collider.enabled = _currIsRaised;
+        UpdateRendererEnabledness();
+
         _matPropertyBlock.SetFloat(PrevIsRaised, _prevIsRaised ? 1 : 0);
-        _matPropertyBlock.SetFloat(CurrIsRaised, isRaised ? 1 : 0);
+        _matPropertyBlock.SetFloat(CurrIsRaised, _currIsRaised ? 1 : 0);
         _renderer.SetPropertyBlock(_matPropertyBlock);
-        _prevIsRaised = isRaised;
     }
 
-    private bool _isLowering;
+    private void UpdateRendererEnabledness()
+    {
+        if (_currIsRaised && _prevIsRaised && !_renderer.enabled)
+        {
+            // STILL (RAISED)
+            _renderer.enabled = true;
+        }  else
+        if (!_currIsRaised && !_prevIsRaised && _renderer.enabled)
+        {
+            // STILL (LOWERED)
+            _renderer.enabled = false;
+        } else
+        if (_currIsRaised && !_prevIsRaised)
+        {
+            // RAISING
+            if (_animProgress > 0 && !_renderer.enabled)
+            {
+                _renderer.enabled = true;
+            } else
+            if (_animProgress <= 0 && _renderer.enabled)
+            {
+                _renderer.enabled = false;
+            }
+        } else
+        if (!_currIsRaised && _prevIsRaised)
+        {
+            // LOWERING
+            if (_animProgress < 1 && !_renderer.enabled)
+            {
+                _renderer.enabled = true;
+            } else
+            if (_animProgress >= 1 && _renderer.enabled)
+            {
+                _renderer.enabled = false;
+            }
+        }
+    }
+
+    private float _animProgress;
     private bool _prevIsRaised;
+    private bool _currIsRaised;
     private Maze.Wall _wall;
     private MaterialPropertyBlock _matPropertyBlock;
 

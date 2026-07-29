@@ -291,11 +291,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   <MazeRadius>k__BackingField: 23
-  <SubdivisionCount>k__BackingField: 4
-  <HoleAngle>k__BackingField: 20
+  <SubdivisionCount>k__BackingField: 3
+  <HoleAngle>k__BackingField: 25
   <WallHeight>k__BackingField: 5
   <WallRadius>k__BackingField: 0.5
-  <AnimSpeed>k__BackingField: 1.5
+  <AnimSpeed>k__BackingField: 3
+  <FullAnimDuration>k__BackingField: 4
   <WallMaterial>k__BackingField: {fileID: 2100000, guid: 089cd7fae4be16349be843f568b80787, type: 2}
   <FloorMaterial>k__BackingField: {fileID: 2100000, guid: 134a9c00f6e6d224c9fdf0d368157188, type: 2}
   <WallTopColor>k__BackingField: {r: 0.9490197, g: 0.5882353, b: 0.95294124, a: 1}
