@@ -14,44 +14,28 @@ public class CharacterController : MonoBehaviour
     private float _radius;
     [SerializeField]
     private Transform _lookRoot;
+    [SerializeField]
+    private Rigidbody _rb;
     
-    private void Update()
+    private void FixedUpdate()
     {
-        transform.position = transform.position.normalized * _radius;
-     
-        _surfaceNormal = -transform.position.normalized;
-        var targetRotation = Quaternion.FromToRotation(transform.up, _surfaceNormal) * transform.rotation;
-        transform.rotation = targetRotation;
+        _surfaceNormal = -_rb.position.normalized;
+
+        var up = _rb.rotation * Vector3.up;
         
-        // Quaternion.LookRotation
-        
-        
+        var targetRotation = Quaternion.FromToRotation(up, _surfaceNormal) * _rb.rotation;
+        _rb.MoveRotation(targetRotation);
+
+        var right = Vector3.ProjectOnPlane(_lookRoot.right, _surfaceNormal).normalized;
+        var forward = Vector3.ProjectOnPlane(_lookRoot.forward, _surfaceNormal).normalized;
+
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
+        Vector2 input = (new Vector2(h, v)).normalized;
+
+        var moveDirection = forward * input.y + right * input.x;
         
-        var forward = Vector3.ProjectOnPlane(_lookRoot.forward, _surfaceNormal).normalized;
-        var right = Vector3.ProjectOnPlane(_lookRoot.right, _surfaceNormal).normalized;
-        var moveDirection = forward * v + right * h;
-        
-        transform.position += moveDirection * (moveSpeed * Time.deltaTime);
-        // Ray ray = new Ray(_foot.position + new Vector3(0, 0.5F, 0), -_surfaceNormal);
-        // if (Physics.Raycast(ray, out var hit, groundCheckDistance, _groundLayer))
-        // {
-        //     Debug.Log("Hit something " + hit.collider.gameObject.name + " at " + hit.point);
-        //     _surfaceNormal = -hit.point.normalized;  // It's a point on a sphere
-        //     
-        //     var targetRotation = Quaternion.FromToRotation(transform.up, _surfaceNormal) * transform.rotation;
-        //     transform.rotation = targetRotation;
-        //
-        //     var targetPosition = hit.point + _surfaceNormal * (transform.position.y - _foot.position.y);
-        //     transform.position = targetPosition;
-        //     
-        //     float h = Input.GetAxis("Horizontal");
-        //     float v = Input.GetAxis("Vertical");
-        //     var moveDirection = transform.forward * v + transform.right * h;
-        //     
-        //     transform.position += moveDirection * (moveSpeed * Time.deltaTime);
-        // }
+        _rb.MovePosition(_rb.position.normalized * (_radius + _foot.transform.localPosition.y) + moveDirection * (moveSpeed * Time.deltaTime));
     }
     
     private Vector3 _surfaceNormal = Vector3.up;

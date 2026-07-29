@@ -119,101 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &320083710
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 320083711}
-  - component: {fileID: 320083713}
-  - component: {fileID: 320083712}
-  m_Layer: 0
-  m_Name: Quad
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &320083711
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 320083710}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 330585546}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &320083712
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 320083710}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 134a9c00f6e6d224c9fdf0d368157188, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &320083713
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 320083710}
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &330585546 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6745551092421542783, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-  m_PrefabInstance: {fileID: 4030233698436552551}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,9 +293,9 @@ MonoBehaviour:
   <MazeRadius>k__BackingField: 23
   <SubdivisionCount>k__BackingField: 4
   <HoleAngle>k__BackingField: 20
-  <WallHeight>k__BackingField: 4
-  <WallRadius>k__BackingField: 0.375
-  <AnimSpeed>k__BackingField: 1
+  <WallHeight>k__BackingField: 5
+  <WallRadius>k__BackingField: 0.5
+  <AnimSpeed>k__BackingField: 1.5
   <WallMaterial>k__BackingField: {fileID: 2100000, guid: 089cd7fae4be16349be843f568b80787, type: 2}
   <FloorMaterial>k__BackingField: {fileID: 2100000, guid: 134a9c00f6e6d224c9fdf0d368157188, type: 2}
   <WallTopColor>k__BackingField: {r: 0.9490197, g: 0.5882353, b: 0.95294124, a: 1}
@@ -861,18 +766,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 97812848103176235, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: far clip plane
-      value: 100000
-      objectReference: {fileID: 0}
-    - target: {fileID: 1389646094813941488, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: _minPitch
-      value: -89
-      objectReference: {fileID: 0}
-    - target: {fileID: 1389646094813941488, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: _initialRotationX
-      value: -90
-      objectReference: {fileID: 0}
     - target: {fileID: 2179829061722068987, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -913,36 +806,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 3699510090701820044, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: m_IsTrigger
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3785098548072652425, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: _radius
-      value: 23
-      objectReference: {fileID: 0}
-    - target: {fileID: 3785098548072652425, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: _lookRoot
-      value: 
-      objectReference: {fileID: 330585546}
-    - target: {fileID: 3785098548072652425, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: groundCheckDistance
+    - target: {fileID: 3503657457799799810, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
+      propertyPath: m_LinearDamping
       value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 6409316370215489124, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
       propertyPath: m_Name
       value: Character
       objectReference: {fileID: 0}
-    - target: {fileID: 6409316370215489124, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      propertyPath: m_TagString
-      value: Player
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 6745551092421542783, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 320083711}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2dab853749030b54684755d19e3ca5e0, type: 3}
 --- !u!1001 &6239231517688499675

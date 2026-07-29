@@ -64,7 +64,7 @@ Shader "Custom/MazeWall"
 
             //#define MAX_RAYMARCH_STEPS 100
             //#define RAYMARCH_THRESHOLD 0.01
-            #define MAX_RAYMARCH_STEPS 150
+            #define MAX_RAYMARCH_STEPS 100
             #define RAYMARCH_THRESHOLD 0.01
 
             float _PrevIsRaised;
@@ -291,8 +291,6 @@ Shader "Custom/MazeWall"
                 const float3 color = lerp(_SideColor, normal * 0.5 + 0.5, isTowardsCenter);
 
                 const float3 finalColor = color * (isTowardsCenter ? 1 : (lightColor + ambient));
-
-
 
                 FRAG_OUT output;
                 output.color = float4(finalColor, 1);

@@ -86,7 +86,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _AnimProgress: 139.79979
+    - _AnimProgress: 26.829931
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -117,8 +117,8 @@ Material:
     - _SrcBlendAlpha: 1
     - _StencilOutputValue: 1
     - _Surface: 0
-    - _WallHeight: 4
-    - _WallRadius: 0.375
+    - _WallHeight: 5
+    - _WallRadius: 0.5
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
