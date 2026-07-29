@@ -64,8 +64,8 @@ Shader "Custom/MazeWall"
 
             //#define MAX_RAYMARCH_STEPS 100
             //#define RAYMARCH_THRESHOLD 0.01
-            #define MAX_RAYMARCH_STEPS 100
-            #define RAYMARCH_THRESHOLD 0.01
+            #define MAX_RAYMARCH_STEPS 200
+            #define RAYMARCH_THRESHOLD 0.0001
 
             float _PrevIsRaised;
             float _CurrIsRaised;
@@ -111,7 +111,7 @@ Shader "Custom/MazeWall"
                 const float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
 
                 // X slope
-                const float bufferedWidth = _WallRadius + 0;
+                const float bufferedWidth = _WallRadius - 0.01; // Why does this magic number work?
                 const float xExtentSD = abs(dx) - bufferedWidth - bufferedWidth * (outerSphereSD / _MazeRadius);
 
                 // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z). Finds intersection of Y axis on z extents.
@@ -196,37 +196,55 @@ Shader "Custom/MazeWall"
                 const float theta = asin(_WallRadius / _MazeRadius);
                 const float3 coneForward = zCrossNormal * sin(theta) + zCrossTangent * cos(theta);
                 
-                const float y = abs(dot(coneForward, _WallV));
-                const float z = abs(dot(coneForward, _WallW));
-                const float theta2 = abs(atan2(z, y));
+                const float y = dot(coneForward, _WallV);
+                const float z = dot(coneForward, _WallW);
+                const float theta2 = abs(atan2(abs(z), abs(y)));
 
-            	const float3 fromTo = p - _MazeCenter;
+                const float3 fromToWallCenter = p - _WallCenter;
+            	const float3 fromToMazeCenter = p - _MazeCenter;
 
-                const float dy = abs(dot(fromTo, _WallV));
-                const float dz = abs(dot(fromTo, _WallW));
-                const float theta3 = abs(atan2(dz, dy));
+                const float dy = dot(fromToMazeCenter, _WallV);
+                const float dz = dot(fromToMazeCenter, _WallW);
+                const float theta3 = abs(atan2(abs(dz), abs(dy)));
 
                 const float buffer = 0;//0.005; // Fights artefacts at borders (radians).
                 if (theta3 <= theta2 + buffer)
                 {
                     // Sides
-                    const float dx = dot(fromTo, _WallU);
-                    const float3 tangent =  -normalize(+(sign(dx) * _WallRadius) * _WallU + _WallCenter);
-                    const float3 normal = cross(tangent, _WallW);
+                    const float dx = dot(fromToMazeCenter, _WallU);
+                    //const float3 tangent =  -normalize(+(sign(dx) * _WallRadius) * _WallU + _WallCenter);
+                    //const float3 normal = cross(tangent, _WallW);
                 
-                    return normal * sign(dot(fromTo, normal));
+                    //return normal * sign(dot(fromToWallCenter, normal));
+
+                    float3 forward = _WallV * dy + _WallW * dz;
+                    const float3 right = normalize(cross(fromToMazeCenter, forward));
+					const float3 normal = normalize(cross(right, fromToMazeCenter));
+
+                    return normal * sign(dot(fromToWallCenter, normal));
+
+                    //const float3 normal = normalize(cross(fromToMazeCenter, _WallW));
+                	//return normal * sign(dot(fromToWallCenter, normal));
                 }
 
-                //const float prllDelta = dot(fromTo, coneForward);
-                //const float3 prllComponent = coneForward * prllDelta;
-                //const float3 perpComponent = fromTo - prllComponent;
+            	const float2 e = float2(0.01, 0.0);
+			    return normalize(float3(
+			        SDF(p + e.xyy) - SDF(p - e.xyy),
+			        SDF(p + e.yxy) - SDF(p - e.yxy),
+			        SDF(p + e.yyx) - SDF(p - e.yyx)
+			    ));
                 
+                const float3 zCrossTangent2 = normalize(-_WallExtents.z * _WallW + (_MazeRadius - deltaY) * -_WallV);
+                const float3 zCrossNormal2 = -normalize(cross(zCrossTangent2, _WallU));
+                const float3 coneForward2 = zCrossNormal2 * sin(theta) + zCrossTangent2 * cos(theta); // May have to switch sign here.
 
-                // TODO: Need both cone forwards and need sign theta
-                const float right = normalize(cross(fromTo, coneForward));
-                const float normal = normalize(cross(right, coneForward));
+                if (dz < 0) return 0;
 
-                return normal;// * sign(dot(fromTo, normal));
+                const float3 forward = dz > 0 ? coneForward : coneForward2;
+                const float3 right = normalize(cross(fromToMazeCenter, forward));
+                const float3 normal = normalize(cross(right, fromToMazeCenter));
+
+                return normal;
                 
 
                 //const float perpRadius = abs(prllDelta) / _MazeRadius * _WallRadius;
@@ -239,12 +257,12 @@ Shader "Custom/MazeWall"
                 // if zTheta is more we don't care how much more since not sdf will ensure we don't poll others
                 //     => same tilt based on angularly getting thinner similar triangles but for xz normalized
                 
-			    const float2 e = float2(0.01, 0.0);
-			    return normalize(float3(
-			        SDF(p + e.xyy) - SDF(p - e.xyy),
-			        SDF(p + e.yxy) - SDF(p - e.yxy),
-			        SDF(p + e.yyx) - SDF(p - e.yyx)
-			    ));
+			    //const float2 e = float2(0.01, 0.0);
+			    //return normalize(float3(
+			    //    SDF(p + e.xyy) - SDF(p - e.xyy),
+			    //    SDF(p + e.yxy) - SDF(p - e.yxy),
+			    //    SDF(p + e.yyx) - SDF(p - e.yyx)
+			    //));
 			}
 
             struct Hit
@@ -306,6 +324,7 @@ Shader "Custom/MazeWall"
                 const float3 finalColor = color * (lightColor + ambient);
 
                 FRAG_OUT output;
+                //output.color = float4(normal == 0 ? 0 : normal * 0.5 + 0.5, 1);
                 output.color = float4(finalColor, 1);
                 //output.depth = ndc.z;// sceneDepth;//ndc.z;//sceneDepth;//ndc.z;
                 return output;
