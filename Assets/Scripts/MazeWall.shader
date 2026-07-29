@@ -64,8 +64,8 @@ Shader "Custom/MazeWall"
 
             //#define MAX_RAYMARCH_STEPS 100
             //#define RAYMARCH_THRESHOLD 0.01
-            #define MAX_RAYMARCH_STEPS 200
-            #define RAYMARCH_THRESHOLD 0.0001
+            #define MAX_RAYMARCH_STEPS 150
+            #define RAYMARCH_THRESHOLD 0.01
 
             float _PrevIsRaised;
             float _CurrIsRaised;
@@ -111,7 +111,7 @@ Shader "Custom/MazeWall"
                 const float outerSphereSD = length(position - _MazeCenter) - _MazeRadius;
 
                 // X slope
-                const float bufferedWidth = _WallRadius - 0.01; // Why does this magic number work?
+                const float bufferedWidth = _WallRadius + 0;
                 const float xExtentSD = abs(dx) - bufferedWidth - bufferedWidth * (outerSphereSD / _MazeRadius);
 
                 // Quadratic formula (from cicle centered on (0, _MazeRadius) and we want to find y at x=_WallExtents.z). Finds intersection of Y axis on z extents.
@@ -233,36 +233,6 @@ Shader "Custom/MazeWall"
 			        SDF(p + e.yxy) - SDF(p - e.yxy),
 			        SDF(p + e.yyx) - SDF(p - e.yyx)
 			    ));
-                
-                const float3 zCrossTangent2 = normalize(-_WallExtents.z * _WallW + (_MazeRadius - deltaY) * -_WallV);
-                const float3 zCrossNormal2 = -normalize(cross(zCrossTangent2, _WallU));
-                const float3 coneForward2 = zCrossNormal2 * sin(theta) + zCrossTangent2 * cos(theta); // May have to switch sign here.
-
-                if (dz < 0) return 0;
-
-                const float3 forward = dz > 0 ? coneForward : coneForward2;
-                const float3 right = normalize(cross(fromToMazeCenter, forward));
-                const float3 normal = normalize(cross(right, fromToMazeCenter));
-
-                return normal;
-                
-
-                //const float perpRadius = abs(prllDelta) / _MazeRadius * _WallRadius;
-                //const float3 newTangent = normalize(normalize(perpComponent) * perpRadius + prllComponent); // The tangents and normals of plane through closest point on cylinder.
-                //const float3 newRight = cross(newTangent, normalize(perpComponent));
-                //const float3 newNormal = cross(newTangent, newRight);
-                //
-                //return newNormal * sign(dot(fromTo, newNormal));
-                // if zTheta between [-segmentZTheta, +segmentZTheta] => only two normals i believe, take the one closer to xDelta
-                // if zTheta is more we don't care how much more since not sdf will ensure we don't poll others
-                //     => same tilt based on angularly getting thinner similar triangles but for xz normalized
-                
-			    //const float2 e = float2(0.01, 0.0);
-			    //return normalize(float3(
-			    //    SDF(p + e.xyy) - SDF(p - e.xyy),
-			    //    SDF(p + e.yxy) - SDF(p - e.yxy),
-			    //    SDF(p + e.yyx) - SDF(p - e.yyx)
-			    //));
 			}
 
             struct Hit
@@ -309,7 +279,6 @@ Shader "Custom/MazeWall"
 
                 float3 ndc = ComputeNormalizedDeviceCoordinatesWithZ(hit.wsPoint, UNITY_MATRIX_VP);
                 float2 screenUV = ndc.xy;
-				float sceneDepth = SampleSceneDepth(screenUV);
                 depth = ndc.z;
 
                 const float3 normal = hit.wsNormal;
@@ -319,14 +288,14 @@ Shader "Custom/MazeWall"
                 const float3 ambient = half3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w); 
 
                 const bool isTowardsCenter = dot(normal, normalize(_MazeCenter - hit.wsPoint)) > 0.99;
-                const float3 color = lerp(_SideColor, _TopColor, isTowardsCenter);
+                const float3 color = lerp(_SideColor, normal * 0.5 + 0.5, isTowardsCenter);
 
-                const float3 finalColor = color * (lightColor + ambient);
+                const float3 finalColor = color * (isTowardsCenter ? 1 : (lightColor + ambient));
+
+
 
                 FRAG_OUT output;
-                //output.color = float4(normal == 0 ? 0 : normal * 0.5 + 0.5, 1);
                 output.color = float4(finalColor, 1);
-                //output.depth = ndc.z;// sceneDepth;//ndc.z;//sceneDepth;//ndc.z;
                 return output;
             }
             
