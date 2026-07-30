@@ -211,20 +211,20 @@ Shader "Custom/MazeWall"
                 if (theta3 <= theta2 + buffer)
                 {
                     // Sides
-                    const float dx = dot(fromToMazeCenter, _WallU);
+                    //const float dx = dot(fromToMazeCenter, _WallU);
                     //const float3 tangent =  -normalize(+(sign(dx) * _WallRadius) * _WallU + _WallCenter);
                     //const float3 normal = cross(tangent, _WallW);
                 
                     //return normal * sign(dot(fromToWallCenter, normal));
 
-                    float3 forward = _WallV * dy + _WallW * dz;
-                    const float3 right = normalize(cross(fromToMazeCenter, forward));
-					const float3 normal = normalize(cross(right, fromToMazeCenter));
+                    //float3 forward = _WallV * dy + _WallW * dz;
+                    //const float3 right = normalize(cross(fromToMazeCenter, forward));
+					//const float3 normal = normalize(cross(right, fromToMazeCenter));
+                    //
+                    //return normal * sign(dot(fromToWallCenter, normal));
 
-                    return normal * sign(dot(fromToWallCenter, normal));
-
-                    //const float3 normal = normalize(cross(fromToMazeCenter, _WallW));
-                	//return normal * sign(dot(fromToWallCenter, normal));
+                    const float3 normal = normalize(cross(fromToMazeCenter, _WallW));
+                	return normal * sign(dot(fromToWallCenter, normal));
                 }
 
             	const float2 e = float2(0.01, 0.0);

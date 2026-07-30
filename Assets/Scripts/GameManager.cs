@@ -69,6 +69,8 @@ public class GameManager : MonoBehaviour
         WallMaterial.SetFloat(WallRadiusNameId, WallRadius);
         WallMaterial.SetVector("_TopColor", WallTopColor);
         WallMaterial.SetVector("_SideColor", WallSideColor);
+
+        Application.targetFrameRate = 30;
     }
 
     private void OnCreateWall(Wall wall)
