@@ -31,12 +31,17 @@ public class ButtonScript : MonoBehaviour
         if (_isInside && _canPress && Input.GetKeyDown(KeyCode.F))
         {
             _canPress = false;
+            _uiRoot.gameObject.SetActive(false);
             StartCoroutine(IE_PlayAnimation());
         }
     }
     
     private void OnTriggerEnter(Collider other)
     {
+        if (!_canPress)
+        {
+            return;
+        }
         if (other.gameObject.CompareTag("Player"))
         {
             _isInside = true;
