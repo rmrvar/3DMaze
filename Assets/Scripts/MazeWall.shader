@@ -272,8 +272,8 @@ Shader "Custom/MazeWall"
 
             FRAG_OUT frag(FRAG_IN i, out float depth : SV_Depth) : SV_Target
             {   
-                const float3 lookOriginWS = _WorldSpaceCameraPos;
-                const float3 lookDirectionWS = normalize(i.positionWS - lookOriginWS);
+                const float3 lookOriginWS = i.positionWS;
+                const float3 lookDirectionWS = normalize(i.positionWS - _WorldSpaceCameraPos);
                 const Hit hit = RayMarch(lookOriginWS, lookDirectionWS);
             	clip(MAX_RAYMARCH_STEPS - hit.numSteps - 1);
 
